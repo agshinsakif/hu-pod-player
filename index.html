@@ -1556,44 +1556,71 @@
     seekBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     seekBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
+    let translationTimeout = null;
+
     function hidePopover() {
-      popover.style.display = 'none';
+      popover.style.display = "none";
     }
 
-    document.addEventListener('selectionchange', () => {
-      setTimeout(handleTranslationSelection, 140);
+    // Debounce to stop request flooding on iOS Safari
+    document.addEventListener("selectionchange", () => {
+      clearTimeout(translationTimeout);
+      translationTimeout = setTimeout(handleTranslationSelection, 350);
     });
 
-    document.addEventListener('pointerdown', (e) => {
+    document.addEventListener("pointerdown", (e) => {
       if (!popover.contains(e.target)) hidePopover();
       if (!speedPopover.contains(e.target) && e.target !== speedBtn) closeSpeedPopover();
     });
 
     async function handleTranslationSelection() {
       const sel = window.getSelection();
-      const txt = sel.toString().trim();
-      if (txt.length > 0) {
-        if (!audioElement.paused) audioElement.pause();
+      const txt = sel ? sel.toString().trim() : "";
 
-        popover.style.display = 'block';
-        popoverContent.innerText = 'Translating…';
+      if (!txt || txt.length < 2) return;
 
-        try {
-          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          popoverContent.innerText = data[0].map(i => i[0]).join('');
-        } catch {
-          popoverContent.innerText = 'Translation service unreachable.';
+      if (!audioElement.paused) audioElement.pause();
+
+      popover.style.display = "block";
+      popoverContent.innerText = "Translating…";
+
+      // 1. Primary: Google Translate endpoint
+      try {
+        const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
+        const res = await fetch(gUrl);
+        if (!res.ok) throw new Error("Status: " + res.status);
+        const data = await res.json();
+        if (data && data[0]) {
+          popoverContent.innerText = data[0].map(i => i[0]).join("");
+          return;
         }
+      } catch (err) {
+        console.warn("Google translate failed, trying fallback...", err);
       }
+
+      // 2. Backup: MyMemory API
+      try {
+        const fbUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=hu|en`;
+        const fbRes = await fetch(fbUrl);
+        if (!fbRes.ok) throw new Error("Fallback status: " + fbRes.status);
+        const fbData = await fbRes.json();
+        if (fbData && fbData.responseData && fbData.responseData.translatedText) {
+          popoverContent.innerText = fbData.responseData.translatedText;
+          return;
+        }
+      } catch (fbErr) {
+        console.error("All translation endpoints failed:", fbErr);
+      }
+
+      popoverContent.innerText = "Translation service unreachable.";
     }
 
+    // Left-Edge Backswipe Navigation
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
 
-    document.addEventListener('touchstart', (e) => {
+    document.addEventListener("touchstart", (e) => {
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
@@ -1601,14 +1628,14 @@
       }
     }, { passive: true });
 
-    document.addEventListener('touchend', (e) => {
+    document.addEventListener("touchend", (e) => {
       if (e.changedTouches.length === 1) {
         const deltaX = e.changedTouches[0].clientX - touchStartX;
         const deltaY = e.changedTouches[0].clientY - touchStartY;
         const elapsed = Date.now() - touchStartTime;
 
         if (touchStartX < 50 && deltaX > 70 && Math.abs(deltaY) < 60 && elapsed < 400) {
-          if (transcriptView.style.display === 'block') {
+          if (transcriptView.style.display === "block") {
             exitToEpisodes();
           } else {
             history.back();
@@ -1618,7 +1645,7 @@
       }
     }, { passive: true });
 
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       updateMarquees();
     });
 

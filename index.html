@@ -1025,6 +1025,7 @@
       }
     }
 
+    
     function applySortAndRender() {
       const mode = sortSelect.value;
       const hideCompleted = hideCompletedCheck.checked;
@@ -1032,10 +1033,7 @@
 
       let list = [...rawEpisodes];
 
-      if (searchQuery) {
-        list = list.filter(ep => (ep.title || '').toLowerCase().includes(searchQuery));
-      }
-
+      // 1. Sort the list first
       if (mode === 'date-desc') {
         list.sort((a, b) => (b.raw_date || '').localeCompare(a.raw_date || ''));
       } else if (mode === 'date-asc') {
@@ -1046,19 +1044,32 @@
         list.sort((a, b) => b.title.localeCompare(a.title));
       }
 
+      // 2. Assign static sorted indexes before filtering
+      const indexedList = list.map((ep, idx) => ({
+        ...ep,
+        originalIndex: idx + 1
+      }));
+
+      // 3. Apply search filter
+      let filteredList = indexedList;
+      if (searchQuery) {
+        filteredList = filteredList.filter(ep => (ep.title || '').toLowerCase().includes(searchQuery));
+      }
+
       listView.innerHTML = '';
       let visibleCount = 0;
 
-      list.forEach((ep) => {
+      filteredList.forEach((ep) => {
         const isCompleted = localStorage.getItem('done_' + ep.title) === 'true';
         if (hideCompleted && isCompleted) return;
 
         visibleCount++;
+        const itemNumber = ep.originalIndex;
         const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
 
         if (currentEpisode && currentEpisode.title === ep.title) {
-          currentEpisode.displayIndex = visibleCount;
-          const syncedTitle = `${visibleCount}. ${currentEpisode.title}`;
+          currentEpisode.displayIndex = itemNumber;
+          const syncedTitle = `${itemNumber}. ${currentEpisode.title}`;
           headerMarqueeText.innerText = syncedTitle;
           pbsHomeTitle.innerText = syncedTitle;
         }
@@ -1066,7 +1077,7 @@
         const card = document.createElement('div');
         card.className = `card ${isCompleted ? 'completed' : ''}`;
         card.innerHTML = `
-          <div class="card-index">${visibleCount}.</div>
+          <div class="card-index">${itemNumber}.</div>
           <div class="card-content">
             <div class="card-title">${ep.title}</div>
             <div class="card-meta">
@@ -1078,8 +1089,7 @@
             </div>
           </div>
         `;
-        const epNum = visibleCount;
-        card.onclick = () => playEpisode(ep, epNum);
+        card.onclick = () => playEpisode(ep, itemNumber);
         listView.appendChild(card);
       });
 
@@ -1087,6 +1097,7 @@
         listView.innerHTML = '<div class="empty-state">No episodes matching your current filter.</div>';
       }
     }
+    
 
     async function playEpisode(ep, index) {
   searchInput.value = ""; clearSearchBtn.style.display = "none";

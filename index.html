@@ -1,3 +1,4 @@
+cat << 'EOF' > ~/podcast-storage/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,7 +37,7 @@
       user-select: none;
     }
 
-    /* Top Centered Header */
+    /* Fixed Centered Header */
     header {
       position: relative;
       padding: max(14px, env(safe-area-inset-top)) 20px 14px;
@@ -71,11 +72,7 @@
       font-size: 18px;
       font-weight: 800;
       letter-spacing: -0.3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       text-align: center;
-      max-width: 62vw;
     }
 
     /* Filter & Sort Bar */
@@ -217,7 +214,7 @@
       font-weight: 700;
     }
 
-    /* Bottom Player Dock */
+    /* Player Dock */
     .player-dock {
       position: fixed;
       bottom: 0;
@@ -270,6 +267,7 @@
 
     /* Controls Row */
     .controls-row {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -293,11 +291,15 @@
       height: 48px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--text);
       user-select: none;
-      touch-action: none;
+      transition: background 0.15s;
+    }
+
+    .btn-speed.active-menu, .btn-speed:active {
+      background: rgba(255, 255, 255, 0.18);
     }
 
     .btn-seek {
@@ -307,7 +309,7 @@
       background: rgba(255, 255, 255, 0.06);
     }
 
-    .btn-seek:active, .btn-speed:active {
+    .btn-seek:active {
       background: rgba(255, 255, 255, 0.16);
     }
 
@@ -335,7 +337,79 @@
       background: rgba(255, 255, 255, 0.16);
     }
 
-    /* Smooth Volume Row */
+    /* Apple Podcasts Style Speed Popover */
+    .speed-popover {
+      position: absolute;
+      bottom: calc(100% + 14px);
+      left: 12px;
+      background: rgba(30, 26, 44, 0.94);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 14px 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      display: none;
+      z-index: 250;
+      max-width: calc(100vw - 24px);
+    }
+
+    /* Downward caret */
+    .speed-popover::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 28px;
+      border-width: 7px;
+      border-style: solid;
+      border-color: rgba(30, 26, 44, 0.94) transparent transparent transparent;
+    }
+
+    .speed-chips {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 2px;
+    }
+
+    .speed-chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .speed-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 20px;
+      min-width: 44px;
+      height: 38px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .speed-chip:active {
+      transform: scale(0.95);
+    }
+
+    .speed-chip.selected {
+      background: #f4efff;
+      color: #0c0a14;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Volume Row */
     .volume-row {
       display: flex;
       align-items: center;
@@ -409,7 +483,7 @@
       </svg>
       Episodes
     </button>
-    <span class="brand-title" id="headerTitle">Genius Podcast</span>
+    <span class="brand-title">Genius Podcast</span>
   </header>
 
   <div class="filter-bar" id="filterBar">
@@ -434,6 +508,7 @@
   </main>
 
   <div class="player-dock" id="playerDock" style="display: none;">
+    <!-- Title is exclusively displayed here -->
     <div class="track-name" id="currentTrackLabel">—</div>
     
     <div class="progress-bar-container">
@@ -443,8 +518,13 @@
     </div>
 
     <div class="controls-row">
-      <!-- Speed Button with scroll/swipe/click listeners -->
-      <button class="btn-dock btn-speed" id="speedBtn" onclick="cyclePlaybackRate()" title="Scroll or click to change speed">1x</button>
+      <!-- Speed Popover -->
+      <div class="speed-popover" id="speedPopover">
+        <div class="speed-chips" id="speedChips"></div>
+      </div>
+
+      <!-- Speed Toggle Button -->
+      <button class="btn-dock btn-speed" id="speedBtn" onclick="toggleSpeedPopover(event)" title="Playback speed">1x</button>
 
       <button class="btn-dock btn-seek" onclick="seekRelative(-10)" title="-10s">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -472,7 +552,7 @@
         </svg>
       </button>
 
-      <button class="btn-dock btn-home" onclick="exitToEpisodes()" title="Go back to home page">
+      <button class="btn-dock btn-home" onclick="exitToEpisodes()" title="Go back to episodes">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
@@ -480,7 +560,6 @@
       </button>
     </div>
 
-    <!-- Active Hardware/WebAudio Volume Slider -->
     <div class="volume-row">
       <svg class="volume-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -505,11 +584,17 @@
     let activeCueIndex = -1;
     let currentEpisode = null;
 
-    // Added 0.9x and 1.1x
-    const speeds = [0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0];
-    let currentSpeedIndex = 2; // Default 1.0x
+    const speedOptions = [
+      { val: 0.75, label: "0,75" },
+      { val: 0.9,  label: "0,9" },
+      { val: 1.0,  label: "1x" },
+      { val: 1.1,  label: "1,1" },
+      { val: 1.25, label: "1,25" },
+      { val: 1.5,  label: "1,5" },
+      { val: 2.0,  label: "2" }
+    ];
+    let selectedSpeed = 1.0;
 
-    // Web Audio API Pipeline for iOS Safari volume support
     let audioCtx = null;
     let gainNode = null;
     let sourceNode = null;
@@ -517,7 +602,6 @@
 
     const listView = document.getElementById('listView');
     const transcriptView = document.getElementById('transcriptView');
-    const headerTitle = document.getElementById('headerTitle');
     const headerBackBtn = document.getElementById('headerBackBtn');
     const filterBar = document.getElementById('filterBar');
     const sortSelect = document.getElementById('sortSelect');
@@ -531,6 +615,8 @@
     const timeTotal = document.getElementById('timeTotal');
     const seekBar = document.getElementById('seekBar');
     const speedBtn = document.getElementById('speedBtn');
+    const speedPopover = document.getElementById('speedPopover');
+    const speedChipsContainer = document.getElementById('speedChips');
     const volumeBar = document.getElementById('volumeBar');
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
@@ -547,12 +633,9 @@
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
-    /* Initialize Web Audio Gain to bypass iOS volume limitation */
     function ensureWebAudio() {
       if (gainNode) {
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         return;
       }
       try {
@@ -565,7 +648,7 @@
         gainNode.connect(audioCtx.destination);
         gainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
       } catch (e) {
-        console.warn("WebAudio gain not supported:", e);
+        console.warn("WebAudio unsupported:", e);
       }
     }
 
@@ -577,12 +660,50 @@
       }
     }
 
-    // Isolate volume controls from swipe/scroll gestures
     ['input', 'change'].forEach(ev => {
       volumeBar.addEventListener(ev, (e) => applyVolume(e.target.value));
     });
     volumeBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     volumeBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+
+    /* Speed Menu Setup */
+    function renderSpeedMenu() {
+      speedChipsContainer.innerHTML = '';
+      speedOptions.forEach(opt => {
+        const chip = document.createElement('button');
+        chip.className = `speed-chip ${opt.val === selectedSpeed ? 'selected' : ''}`;
+        chip.innerText = opt.label;
+        chip.onclick = (e) => {
+          e.stopPropagation();
+          setSpeed(opt.val, opt.label);
+          closeSpeedPopover();
+        };
+        speedChipsContainer.appendChild(chip);
+      });
+    }
+
+    function setSpeed(val, label) {
+      selectedSpeed = val;
+      audioElement.playbackRate = val;
+      speedBtn.innerText = label || (val + "x");
+      renderSpeedMenu();
+    }
+
+    function toggleSpeedPopover(e) {
+      e.stopPropagation();
+      const isOpen = speedPopover.style.display === 'block';
+      if (isOpen) {
+        closeSpeedPopover();
+      } else {
+        speedPopover.style.display = 'block';
+        speedBtn.classList.add('active-menu');
+      }
+    }
+
+    function closeSpeedPopover() {
+      speedPopover.style.display = 'none';
+      speedBtn.classList.remove('active-menu');
+    }
 
     async function loadPlaylist() {
       try {
@@ -648,7 +769,7 @@
 
       audioElement.src = safeUrl(currentEpisode.audio);
       audioElement.load();
-      applySpeed();
+      audioElement.playbackRate = selectedSpeed;
 
       playerDock.style.display = 'flex';
       cues = [];
@@ -657,13 +778,12 @@
       listView.style.display = 'none';
       filterBar.style.display = 'none';
       transcriptView.style.display = 'block';
-      headerTitle.innerText = currentEpisode.title;
+      // Keep "Genius Podcast" centered at the top; only show Back button
       headerBackBtn.style.display = 'inline-flex';
 
       const wasCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
       const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
 
-      /* Rule 1: If restarting a completed episode, immediately unmark as completed and reset to 0:00 */
       if (wasCompleted) {
         localStorage.removeItem('done_' + currentEpisode.title);
         localStorage.setItem('pos_' + currentEpisode.title, '0');
@@ -704,8 +824,8 @@
       transcriptView.style.display = 'none';
       listView.style.display = 'flex';
       filterBar.style.display = 'flex';
-      headerTitle.innerText = 'Genius Podcast';
       headerBackBtn.style.display = 'none';
+      closeSpeedPopover();
       applySortAndRender();
     }
 
@@ -721,7 +841,7 @@
       } else if (parts.length === 2) {
         m = parseInt(parts[0], 10) || 0;
         const sParts = parts[1].split(".");
-        s = parseInt(sParts[0], 10) || 0;
+        s = parseInt(sParts[1], 10) || 0;
         ms = sParts[1] ? parseInt(sParts[1].padEnd(3, "0").slice(0, 3), 10) : 0;
       }
       return h * 3600 + m * 60 + s + ms / 1000;
@@ -774,6 +894,7 @@
 
     function togglePlay() {
       ensureWebAudio();
+      closeSpeedPopover();
       if (audioElement.paused) {
         audioElement.play().catch(() => {});
         hidePopover();
@@ -783,52 +904,9 @@
     }
 
     function seekRelative(sec) {
+      closeSpeedPopover();
       audioElement.currentTime = Math.max(0, Math.min(audioElement.duration || 0, audioElement.currentTime + sec));
     }
-
-    /* Rule 2: Playback Speed Scrolling and Touch Swiping */
-    function applySpeed() {
-      const rate = speeds[currentSpeedIndex];
-      audioElement.playbackRate = rate;
-      speedBtn.innerText = rate + "x";
-    }
-
-    function cyclePlaybackRate() {
-      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
-      applySpeed();
-    }
-
-    // Mouse wheel scrolling on speed button
-    speedBtn.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      if (e.deltaY < 0) {
-        if (currentSpeedIndex < speeds.length - 1) currentSpeedIndex++;
-      } else {
-        if (currentSpeedIndex > 0) currentSpeedIndex--;
-      }
-      applySpeed();
-    }, { passive: false });
-
-    // Touch swipe scrolling on speed button for mobile
-    let speedTouchY = 0;
-    speedBtn.addEventListener('touchstart', (e) => {
-      speedTouchY = e.touches[0].clientY;
-      e.stopPropagation();
-    }, { passive: true });
-
-    speedBtn.addEventListener('touchmove', (e) => {
-      const diff = speedTouchY - e.touches[0].clientY;
-      if (Math.abs(diff) > 20) {
-        if (diff > 0 && currentSpeedIndex < speeds.length - 1) {
-          currentSpeedIndex++;
-        } else if (diff < 0 && currentSpeedIndex > 0) {
-          currentSpeedIndex--;
-        }
-        speedTouchY = e.touches[0].clientY;
-        applySpeed();
-      }
-      e.stopPropagation();
-    }, { passive: true });
 
     // Spacebar Pause / Play on PC
     window.addEventListener('keydown', (e) => {
@@ -860,11 +938,9 @@
       if (currentEpisode && cur > 0) {
         localStorage.setItem('pos_' + currentEpisode.title, cur.toString());
 
-        // Marked as completed only if within 5s of end or >98%
         if (dur > 0 && (cur >= dur - 5 || cur / dur >= 0.98)) {
           localStorage.setItem('done_' + currentEpisode.title, 'true');
         } else if (localStorage.getItem('done_' + currentEpisode.title) === 'true' && cur < dur - 10) {
-          // Rule 1: If user rewinds backwards, unmark as completed
           localStorage.removeItem('done_' + currentEpisode.title);
         }
       }
@@ -899,8 +975,10 @@
       setTimeout(handleTranslationSelection, 140);
     });
 
+    // Close popovers when clicking outside
     document.addEventListener('pointerdown', (e) => {
       if (!popover.contains(e.target)) hidePopover();
+      if (!speedPopover.contains(e.target) && e.target !== speedBtn) closeSpeedPopover();
     });
 
     async function handleTranslationSelection() {
@@ -953,7 +1031,15 @@
       }
     }, { passive: true });
 
+    renderSpeedMenu();
     loadPlaylist();
   </script>
 </body>
 </html>
+EOF
+
+
+
+
+
+

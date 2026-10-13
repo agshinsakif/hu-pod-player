@@ -114,8 +114,9 @@
     main {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 20px 230px;
+      padding: 16px 20px 260px;
       -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
 
     .list-view {
@@ -138,6 +139,9 @@
       border-radius: 14px;
       padding: 16px;
       cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
       transition: background 0.15s, border-color 0.15s;
     }
 
@@ -148,6 +152,19 @@
 
     .card.completed {
       opacity: 0.6;
+    }
+
+    .card-index {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+      min-width: 26px;
+      padding-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-content {
+      flex: 1;
     }
 
     .card-title {
@@ -211,32 +228,53 @@
       font-weight: 700;
     }
 
-    /* Player Dock */
-    .player-dock {
+    /* Taller Playback Buttons Section with Slide-Away Transitions */
+    .playback-buttons-section {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       background: var(--card-bg);
-      backdrop-filter: blur(25px);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border-top: 1px solid var(--border);
-      padding: 14px 20px calc(16px + env(safe-area-inset-bottom));
+      padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
       z-index: 100;
       display: flex;
       flex-direction: column;
       align-items: center;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      transform: translateY(0);
+      opacity: 1;
     }
 
+    .playback-buttons-section.hidden-dock {
+      transform: translateY(105%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Expanded Title Area with 2-Line Wrap and Clickable Pointer */
     .track-name {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       text-align: center;
       width: 100%;
-      white-space: nowrap;
+      max-width: 90vw;
+      line-height: 1.35;
+      max-height: 2.7em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       color: var(--text);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .track-name:active {
+      color: var(--accent);
     }
 
     .progress-bar-container {
@@ -244,7 +282,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .time-label {
@@ -262,14 +300,13 @@
       touch-action: none;
     }
 
-    /* Controls Row */
     .controls-row {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 18px;
+      gap: 20px;
       width: 100%;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .btn-dock {
@@ -282,7 +319,6 @@
       justify-content: center;
     }
 
-    /* Compact Speed Wrapper Attached to Button */
     .speed-btn-wrapper {
       position: relative;
       display: inline-flex;
@@ -306,7 +342,6 @@
       background: rgba(255, 255, 255, 0.18);
     }
 
-    /* Smaller Speed Popover Attached directly on Top */
     .speed-popover {
       position: absolute;
       bottom: calc(100% + 8px);
@@ -322,7 +357,6 @@
       z-index: 250;
     }
 
-    /* Caret pointing directly to the center of the speed button */
     .speed-popover::after {
       content: "";
       position: absolute;
@@ -369,8 +403,8 @@
     }
 
     .btn-seek {
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.06);
     }
@@ -380,8 +414,8 @@
     }
 
     .btn-play-pause {
-      width: 72px;
-      height: 72px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       background: var(--accent);
       color: #fff;
@@ -423,6 +457,31 @@
       accent-color: var(--accent);
       cursor: pointer;
       touch-action: none;
+    }
+
+    /* Bottom-Right "Go to Top" Button */
+    .btn-scroll-top {
+      position: fixed;
+      right: 20px;
+      bottom: calc(230px + env(safe-area-inset-bottom));
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 90;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, background 0.15s;
+    }
+
+    .btn-scroll-top:active {
+      transform: scale(0.92);
+      background: var(--card-active);
     }
 
     #popover {
@@ -492,15 +551,23 @@
     </label>
   </div>
 
-  <main>
+  <main id="mainContainer">
     <div class="list-view" id="listView">
       <div class="empty-state">Loading playlist…</div>
     </div>
     <div class="transcript-view" id="transcriptView"></div>
   </main>
 
-  <div class="player-dock" id="playerDock" style="display: none;">
-    <div class="track-name" id="currentTrackLabel">—</div>
+  <!-- Go to Top Button for Home Screen -->
+  <button class="btn-scroll-top" id="scrollTopBtn" onclick="scrollToTop()" title="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M18 15l-6-6-6 6"/>
+    </svg>
+  </button>
+
+  <!-- Playback Buttons Section -->
+  <div class="playback-buttons-section" id="playbackButtonsSection" style="display: none;">
+    <div class="track-name" id="currentTrackLabel" onclick="onPlaybackTitleClick()" title="Click to view transcript">—</div>
     
     <div class="progress-bar-container">
       <span class="time-label" id="timeCurrent">0:00</span>
@@ -509,7 +576,6 @@
     </div>
 
     <div class="controls-row">
-      <!-- Speed Button + Attached Small Popover -->
       <div class="speed-btn-wrapper">
         <div class="speed-popover" id="speedPopover">
           <div class="speed-chips" id="speedChips"></div>
@@ -526,10 +592,10 @@
       </button>
 
       <button class="btn-dock btn-play-pause" id="playPauseBtn" onclick="togglePlay()" title="Play / Pause (Spacebar)">
-        <svg id="playIcon" width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+        <svg id="playIcon" width="34" height="34" fill="currentColor" viewBox="0 0 24 24">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
-        <svg id="pauseIcon" width="32" height="32" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
+        <svg id="pauseIcon" width="34" height="34" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
           <rect x="6" y="4" width="4" height="16"/>
           <rect x="14" y="4" width="4" height="16"/>
         </svg>
@@ -551,12 +617,13 @@
       </button>
     </div>
 
+    <!-- Default 50% Volume -->
     <div class="volume-row">
       <svg class="volume-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
         <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
       </svg>
-      <input type="range" class="volume-slider" id="volumeBar" min="0" max="1" step="0.02" value="1">
+      <input type="range" class="volume-slider" id="volumeBar" min="0" max="1" step="0.02" value="0.5">
     </div>
 
     <audio id="audioElement" playsinline preload="auto"></audio>
@@ -589,8 +656,9 @@
     let audioCtx = null;
     let gainNode = null;
     let sourceNode = null;
-    let currentVolume = 1.0;
+    let currentVolume = 0.5; // Default 50%
 
+    const mainContainer = document.getElementById('mainContainer');
     const listView = document.getElementById('listView');
     const transcriptView = document.getElementById('transcriptView');
     const headerTitle = document.getElementById('headerTitle');
@@ -598,7 +666,7 @@
     const filterBar = document.getElementById('filterBar');
     const sortSelect = document.getElementById('sortSelect');
     const hideCompletedCheck = document.getElementById('hideCompletedCheck');
-    const playerDock = document.getElementById('playerDock');
+    const playbackButtonsSection = document.getElementById('playbackButtonsSection');
     const audioElement = document.getElementById('audioElement');
     const currentTrackLabel = document.getElementById('currentTrackLabel');
     const playIcon = document.getElementById('playIcon');
@@ -610,6 +678,7 @@
     const speedPopover = document.getElementById('speedPopover');
     const speedChipsContainer = document.getElementById('speedChips');
     const volumeBar = document.getElementById('volumeBar');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
 
@@ -657,6 +726,54 @@
     });
     volumeBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     volumeBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
+
+    /* Hide Playback Section on Scroll Down, Reveal on Scroll Up */
+    let lastScrollTop = 0;
+    mainContainer.addEventListener('scroll', () => {
+      const st = mainContainer.scrollTop;
+      const isHome = listView.style.display !== 'none';
+
+      // Toggle "Go to Top" button on home screen
+      if (isHome && st > 240) {
+        scrollTopBtn.style.display = 'flex';
+      } else {
+        scrollTopBtn.style.display = 'none';
+      }
+
+      if (Math.abs(st - lastScrollTop) > 6) {
+        if (st > lastScrollTop && st > 60) {
+          // Scrolling down: hide playback buttons section
+          playbackButtonsSection.classList.add('hidden-dock');
+          closeSpeedPopover();
+        } else {
+          // Scrolling up: reveal playback buttons section
+          playbackButtonsSection.classList.remove('hidden-dock');
+        }
+        lastScrollTop = st;
+      }
+    }, { passive: true });
+
+    function scrollToTop() {
+      mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* Clicking Title on Home Screen returns to Player Screen */
+    function onPlaybackTitleClick() {
+      if (!currentEpisode) return;
+      if (listView.style.display !== 'none') {
+        openPlayerView();
+      }
+    }
+
+    function openPlayerView() {
+      listView.style.display = 'none';
+      filterBar.style.display = 'none';
+      scrollTopBtn.style.display = 'none';
+      transcriptView.style.display = 'block';
+      headerTitle.style.display = 'none';
+      headerBackBtn.style.display = 'inline-flex';
+      playbackButtonsSection.classList.remove('hidden-dock');
+    }
 
     function renderSpeedMenu() {
       speedChipsContainer.innerHTML = '';
@@ -736,13 +853,16 @@
         const card = document.createElement('div');
         card.className = `card ${isCompleted ? 'completed' : ''}`;
         card.innerHTML = `
-          <div class="card-title">${ep.title}</div>
-          <div class="card-meta">
-            ${ep.upload_date ? `<span>📅 ${ep.upload_date}</span>` : ''}
-            <span>${ep.format || 'AUDIO'}</span>
-            ${!ep.vtt ? '<span class="badge badge-audio">Audio only</span>' : ''}
-            ${isCompleted ? '<span class="badge badge-completed">Completed</span>' : ''}
-            ${!isCompleted && savedPos > 5 ? `<span class="badge badge-resume">Resume ${formatTime(savedPos)}</span>` : ''}
+          <div class="card-index">${visibleCount}.</div>
+          <div class="card-content">
+            <div class="card-title">${ep.title}</div>
+            <div class="card-meta">
+              ${ep.upload_date ? `<span>📅 ${ep.upload_date}</span>` : ''}
+              <span>${ep.format || 'AUDIO'}</span>
+              ${!ep.vtt ? '<span class="badge badge-audio">Audio only</span>' : ''}
+              ${isCompleted ? '<span class="badge badge-completed">Completed</span>' : ''}
+              ${!isCompleted && savedPos > 5 ? `<span class="badge badge-resume">Resume ${formatTime(savedPos)}</span>` : ''}
+            </div>
           </div>
         `;
         card.onclick = () => playEpisode(ep);
@@ -761,18 +881,14 @@
       audioElement.src = safeUrl(currentEpisode.audio);
       audioElement.load();
       audioElement.playbackRate = selectedSpeed;
+      audioElement.volume = currentVolume;
 
-      playerDock.style.display = 'flex';
+      playbackButtonsSection.style.display = 'flex';
+      playbackButtonsSection.classList.remove('hidden-dock');
       cues = [];
       activeCueIndex = -1;
 
-      listView.style.display = 'none';
-      filterBar.style.display = 'none';
-      transcriptView.style.display = 'block';
-
-      // Hide "Genius Podcast" on player page; show only back button
-      headerTitle.style.display = 'none';
-      headerBackBtn.style.display = 'inline-flex';
+      openPlayerView();
 
       const wasCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
       const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
@@ -817,11 +933,9 @@
       transcriptView.style.display = 'none';
       listView.style.display = 'flex';
       filterBar.style.display = 'flex';
-
-      // Restore "Genius Podcast" title on homepage
       headerTitle.style.display = 'block';
       headerBackBtn.style.display = 'none';
-
+      playbackButtonsSection.classList.remove('hidden-dock');
       closeSpeedPopover();
       applySortAndRender();
     }

@@ -133,6 +133,15 @@
       font-weight: 600;
     }
 
+    .tag-resume {
+      color: var(--accent);
+      background: rgba(139, 92, 246, 0.15);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
     .transcript-view {
       display: none;
       max-width: 680px;
@@ -245,20 +254,31 @@
       transform: scale(0.96);
     }
 
+    /* Top-Anchored Translation Box */
     #popover {
       position: fixed;
+      top: max(16px, env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      margin: 0 auto;
+      max-width: 560px;
       background: var(--card-bg);
       backdrop-filter: blur(25px);
       border: 1px solid var(--accent);
-      padding: 12px 16px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      z-index: 200;
+      padding: 12px 18px;
+      border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+      z-index: 300;
       display: none;
-      max-width: 82%;
-      font-size: 14px;
       user-select: text;
       -webkit-user-select: text;
+    }
+
+    .popover-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
     }
 
     .popover-tag {
@@ -266,14 +286,19 @@
       font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .popover-body {
+      font-size: 15px;
+      line-height: 1.4;
+      color: var(--text);
     }
   </style>
 </head>
 <body>
 
   <header>
-    <!-- Back Button -->
     <button class="btn-back" id="backBtn" onclick="exitToEpisodes()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -308,7 +333,7 @@
         </svg>
       </button>
 
-      <button class="btn-transport btn-play-pause" id="playPauseBtn" onclick="togglePlay()" title="Play / Pause">
+      <button class="btn-transport btn-play-pause" id="playPauseBtn" onclick="togglePlay()" title="Play / Pause (Spacebar)">
         <svg id="playIcon" width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
@@ -330,15 +355,19 @@
     <audio id="audioElement" playsinline preload="auto"></audio>
   </div>
 
+  <!-- Top-Anchored Translation Card -->
   <div id="popover">
-    <div class="popover-tag">English Translation</div>
-    <div id="popoverContent">Translating…</div>
+    <div class="popover-header">
+      <span class="popover-tag">English Translation</span>
+    </div>
+    <div class="popover-body" id="popoverContent">Translating…</div>
   </div>
 
   <script>
     let episodes = [];
     let cues = [];
     let activeCueIndex = -1;
+    let currentEpisode = null;
 
     const listView = document.getElementById('listView');
     const transcriptView = document.getElementById('transcriptView');
@@ -355,20 +384,27 @@
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
 
-    // Crucial: Converts '#', spaces, and special unicode symbols to valid URL paths
+    // Strict URL encoding per path segment to guarantee compatibility with iOS Safari
     function safeUrl(path) {
       if (!path) return "";
-      return encodeURI(path).replace(/#/g, '%23').replace(/\?/g, '%3F');
+      return path.split('/').map(part => encodeURIComponent(part)).join('/');
+    }
+
+    function formatTime(sec) {
+      if (isNaN(sec) || sec <= 0) return "0:00";
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
     async function loadPlaylist() {
       try {
         const res = await fetch('playlist.json?nocache=' + Date.now());
-        if (!res.ok) throw new Error("Status " + res.status);
+        if (!res.ok) throw new Error("HTTP " + res.status);
         episodes = await res.json();
         renderList();
       } catch (err) {
-        listView.innerHTML = '<div class="empty-state">No episodes found or playlist.json not accessible.<br><small>' + err.message + '</small></div>';
+        listView.innerHTML = `<div class="empty-state">Could not load playlist.json.<br><small>${err.message}</small></div>`;
       }
     }
 
@@ -380,6 +416,7 @@
       }
 
       episodes.forEach((ep, idx) => {
+        const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
@@ -387,6 +424,7 @@
           <div class="card-meta">
             <span>${ep.format || 'AUDIO'}</span>
             ${!ep.vtt ? '<span class="tag-audio-only">Audio only</span>' : ''}
+            ${savedPos > 5 ? `<span class="tag-resume">Resume ${formatTime(savedPos)}</span>` : ''}
           </div>
         `;
         card.onclick = () => playEpisode(idx);
@@ -395,35 +433,41 @@
     }
 
     async function playEpisode(index) {
-      const ep = episodes[index];
-      currentTrackLabel.innerText = ep.title;
-      
-      // Use sanitized URL with # escaped
-      const cleanAudioUrl = safeUrl(ep.audio);
-      audioElement.src = cleanAudioUrl;
+      currentEpisode = episodes[index];
+      currentTrackLabel.innerText = currentEpisode.title;
+
+      audioElement.src = safeUrl(currentEpisode.audio);
       audioElement.load();
-      
+
       playerDock.style.display = 'flex';
       cues = [];
       activeCueIndex = -1;
 
-      // Switch view and show Back button
       listView.style.display = 'none';
       transcriptView.style.display = 'block';
-      headerTitle.innerText = ep.title;
+      headerTitle.innerText = currentEpisode.title;
       backBtn.style.display = 'inline-flex';
 
-      if (ep.vtt) {
+      // Restore playback position
+      const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
+      audioElement.onloadedmetadata = () => {
+        timeTotal.innerText = formatTime(audioElement.duration);
+        seekBar.max = audioElement.duration || 100;
+        if (savedTime > 0 && savedTime < (audioElement.duration - 5)) {
+          audioElement.currentTime = savedTime;
+        }
+      };
+
+      if (currentEpisode.vtt) {
         try {
-          const cleanVttUrl = safeUrl(ep.vtt);
-          const res = await fetch(cleanVttUrl);
+          const res = await fetch(safeUrl(currentEpisode.vtt) + '?nocache=' + Date.now());
           if (!res.ok) throw new Error("HTTP " + res.status);
           const text = await res.text();
           cues = parseVtt(text);
           if (cues.length > 0) {
             renderTranscript();
           } else {
-            transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Transcript file was empty or had no dialogue.</div>';
+            transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Transcript file had no lines.</div>';
           }
         } catch (err) {
           transcriptView.innerHTML = `<div style="text-align: center; color: var(--danger); margin-top: 60px;">Could not load transcript (${err.message}).</div>`;
@@ -432,7 +476,7 @@
         transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
       }
 
-      audioElement.play().catch(e => console.warn("Autoplay notice:", e));
+      audioElement.play().catch(() => {});
     }
 
     function exitToEpisodes() {
@@ -440,6 +484,7 @@
       listView.style.display = 'flex';
       headerTitle.innerText = 'Podcasts';
       backBtn.style.display = 'none';
+      renderList();
     }
 
     function parseVttTime(str) {
@@ -505,6 +550,109 @@
       });
     }
 
+    function togglePlay() {
+      if (audioElement.paused) {
+        audioElement.play().catch(() => {});
+        hidePopover();
+      } else {
+        audioElement.pause();
+      }
+    }
+
+    function seekRelative(sec) {
+      audioElement.currentTime = Math.max(0, Math.min(audioElement.duration || 0, audioElement.currentTime + sec));
+    }
+
+    // Spacebar control for desktop
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea') return;
+        e.preventDefault();
+        togglePlay();
+      }
+    });
+
+    audioElement.addEventListener('play', () => {
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = 'block';
+      hidePopover();
+    });
+
+    audioElement.addEventListener('pause', () => {
+      playIcon.style.display = 'block';
+      pauseIcon.style.display = 'none';
+    });
+
+    audioElement.addEventListener('timeupdate', () => {
+      const cur = audioElement.currentTime;
+      timeCurrent.innerText = formatTime(cur);
+      seekBar.value = cur;
+
+      // Save position periodically
+      if (currentEpisode && cur > 0) {
+        localStorage.setItem('pos_' + currentEpisode.title, cur.toString());
+      }
+
+      // Sync active cue
+      const idx = cues.findIndex(c => cur >= c.start && cur <= c.end);
+      if (idx !== -1 && idx !== activeCueIndex) {
+        if (activeCueIndex !== -1) {
+          const old = document.getElementById(`cue-${activeCueIndex}`);
+          if (old) old.classList.remove('active');
+        }
+        activeCueIndex = idx;
+        const current = document.getElementById(`cue-${activeCueIndex}`);
+        if (current) {
+          current.classList.add('active');
+          current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+
+    seekBar.addEventListener('input', (e) => {
+      audioElement.currentTime = Number(e.target.value);
+    });
+
+    // Translation & Auto-Pause Handling
+    function hidePopover() {
+      popover.style.display = 'none';
+    }
+
+    document.addEventListener('selectionchange', () => {
+      setTimeout(handleTranslationSelection, 140);
+    });
+
+    // Autohide on touch or click elsewhere
+    document.addEventListener('pointerdown', (e) => {
+      if (!popover.contains(e.target)) {
+        hidePopover();
+      }
+    });
+
+    async function handleTranslationSelection() {
+      const sel = window.getSelection();
+      const txt = sel.toString().trim();
+      if (txt.length > 0) {
+        // Auto-pause playback upon text selection
+        if (!audioElement.paused) {
+          audioElement.pause();
+        }
+
+        popover.style.display = 'block';
+        popoverContent.innerText = 'Translating…';
+
+        try {
+          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          popoverContent.innerText = data[0].map(i => i[0]).join('');
+        } catch {
+          popoverContent.innerText = 'Translation service unreachable.';
+        }
+      }
+    }
+
     // Left-Edge Backswipe Navigation
     let touchStartX = 0;
     let touchStartY = 0;
@@ -534,97 +682,6 @@
         }
       }
     }, { passive: true });
-
-    function formatTime(sec) {
-      if (isNaN(sec)) return "0:00";
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-
-    function togglePlay() {
-      if (audioElement.paused) {
-        audioElement.play().catch(() => {});
-      } else {
-        audioElement.pause();
-      }
-    }
-
-    function seekRelative(sec) {
-      audioElement.currentTime = Math.max(0, Math.min(audioElement.duration || 0, audioElement.currentTime + sec));
-    }
-
-    audioElement.addEventListener('play', () => {
-      playIcon.style.display = 'none';
-      pauseIcon.style.display = 'block';
-    });
-
-    audioElement.addEventListener('pause', () => {
-      playIcon.style.display = 'block';
-      pauseIcon.style.display = 'none';
-    });
-
-    audioElement.addEventListener('loadedmetadata', () => {
-      timeTotal.innerText = formatTime(audioElement.duration);
-      seekBar.max = audioElement.duration || 100;
-    });
-
-    audioElement.addEventListener('timeupdate', () => {
-      const cur = audioElement.currentTime;
-      timeCurrent.innerText = formatTime(cur);
-      seekBar.value = cur;
-
-      const idx = cues.findIndex(c => cur >= c.start && cur <= c.end);
-      if (idx !== -1 && idx !== activeCueIndex) {
-        if (activeCueIndex !== -1) {
-          const old = document.getElementById(`cue-${activeCueIndex}`);
-          if (old) old.classList.remove('active');
-        }
-        activeCueIndex = idx;
-        const current = document.getElementById(`cue-${activeCueIndex}`);
-        if (current) {
-          current.classList.add('active');
-          current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-    });
-
-    seekBar.addEventListener('input', (e) => {
-      audioElement.currentTime = Number(e.target.value);
-    });
-
-    // Translation Popover
-    document.addEventListener('selectionchange', () => {
-      setTimeout(checkSelection, 120);
-    });
-
-    document.addEventListener('mousedown', (e) => {
-      if (!popover.contains(e.target)) popover.style.display = 'none';
-    });
-
-    async function checkSelection() {
-      const sel = window.getSelection();
-      const txt = sel.toString().trim();
-      if (txt.length > 0) {
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        popover.style.top = `${Math.max(16, rect.top - 68)}px`;
-        popover.style.left = '20px';
-        popover.style.display = 'block';
-        popoverContent.innerText = 'Translating…';
-
-        try {
-          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          popoverContent.innerText = data[0].map(i => i[0]).join('');
-        } catch {
-          popoverContent.innerText = 'Translation service unreachable.';
-        }
-      } else {
-        popover.style.display = 'none';
-      }
-    }
 
     loadPlaylist();
   </script>

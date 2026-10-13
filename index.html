@@ -13,6 +13,7 @@
       --text-muted: #8b859e;
       --accent: #8b5cf6;
       --border: rgba(255, 255, 255, 0.08);
+      --danger: #ef4444;
     }
 
     * {
@@ -40,17 +41,37 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
+      gap: 12px;
       z-index: 50;
     }
 
+    .btn-back {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .btn-back:active {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
     .brand-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       letter-spacing: -0.3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 90vw;
+      flex: 1;
     }
 
     main {
@@ -134,7 +155,6 @@
       font-weight: 700;
     }
 
-    /* Player Dock */
     .player-dock {
       position: fixed;
       bottom: 0;
@@ -225,7 +245,6 @@
       transform: scale(0.96);
     }
 
-    /* Translation Popover */
     #popover {
       position: fixed;
       background: var(--card-bg);
@@ -254,6 +273,13 @@
 <body>
 
   <header>
+    <!-- Back Button -->
+    <button class="btn-back" id="backBtn" onclick="exitToEpisodes()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Episodes
+    </button>
     <span class="brand-title" id="headerTitle">Podcasts</span>
   </header>
 
@@ -301,7 +327,7 @@
       </button>
     </div>
 
-    <audio id="audioElement" playsinline></audio>
+    <audio id="audioElement" playsinline preload="auto"></audio>
   </div>
 
   <div id="popover">
@@ -317,6 +343,7 @@
     const listView = document.getElementById('listView');
     const transcriptView = document.getElementById('transcriptView');
     const headerTitle = document.getElementById('headerTitle');
+    const backBtn = document.getElementById('backBtn');
     const playerDock = document.getElementById('playerDock');
     const audioElement = document.getElementById('audioElement');
     const currentTrackLabel = document.getElementById('currentTrackLabel');
@@ -328,14 +355,20 @@
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
 
+    // Crucial: Converts '#', spaces, and special unicode symbols to valid URL paths
+    function safeUrl(path) {
+      if (!path) return "";
+      return encodeURI(path).replace(/#/g, '%23').replace(/\?/g, '%3F');
+    }
+
     async function loadPlaylist() {
       try {
         const res = await fetch('playlist.json?nocache=' + Date.now());
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error("Status " + res.status);
         episodes = await res.json();
         renderList();
-      } catch {
-        listView.innerHTML = '<div class="empty-state">No episodes found.<br>Run <code>gp URL</code> in terminal to add one.</div>';
+      } catch (err) {
+        listView.innerHTML = '<div class="empty-state">No episodes found or playlist.json not accessible.<br><small>' + err.message + '</small></div>';
       }
     }
 
@@ -364,29 +397,49 @@
     async function playEpisode(index) {
       const ep = episodes[index];
       currentTrackLabel.innerText = ep.title;
-      audioElement.src = ep.audio;
+      
+      // Use sanitized URL with # escaped
+      const cleanAudioUrl = safeUrl(ep.audio);
+      audioElement.src = cleanAudioUrl;
+      audioElement.load();
+      
       playerDock.style.display = 'flex';
       cues = [];
       activeCueIndex = -1;
 
+      // Switch view and show Back button
+      listView.style.display = 'none';
+      transcriptView.style.display = 'block';
+      headerTitle.innerText = ep.title;
+      backBtn.style.display = 'inline-flex';
+
       if (ep.vtt) {
         try {
-          const res = await fetch(ep.vtt);
+          const cleanVttUrl = safeUrl(ep.vtt);
+          const res = await fetch(cleanVttUrl);
+          if (!res.ok) throw new Error("HTTP " + res.status);
           const text = await res.text();
           cues = parseVtt(text);
-          renderTranscript();
-        } catch {
-          transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Could not load transcript file.</div>';
+          if (cues.length > 0) {
+            renderTranscript();
+          } else {
+            transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Transcript file was empty or had no dialogue.</div>';
+          }
+        } catch (err) {
+          transcriptView.innerHTML = `<div style="text-align: center; color: var(--danger); margin-top: 60px;">Could not load transcript (${err.message}).</div>`;
         }
       } else {
         transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
       }
 
-      listView.style.display = 'none';
-      transcriptView.style.display = 'block';
-      headerTitle.innerText = ep.title;
+      audioElement.play().catch(e => console.warn("Autoplay notice:", e));
+    }
 
-      audioElement.play().catch(() => {});
+    function exitToEpisodes() {
+      transcriptView.style.display = 'none';
+      listView.style.display = 'flex';
+      headerTitle.innerText = 'Podcasts';
+      backBtn.style.display = 'none';
     }
 
     function parseVttTime(str) {
@@ -452,7 +505,7 @@
       });
     }
 
-    /* Left-Edge Backswipe Navigation */
+    // Left-Edge Backswipe Navigation
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
@@ -472,23 +525,16 @@
         const elapsed = Date.now() - touchStartTime;
 
         if (touchStartX < 50 && deltaX > 70 && Math.abs(deltaY) < 60 && elapsed < 400) {
-          handleBackSwipe();
+          if (transcriptView.style.display === 'block') {
+            exitToEpisodes();
+          } else {
+            history.back();
+            window.close();
+          }
         }
       }
     }, { passive: true });
 
-    function handleBackSwipe() {
-      if (transcriptView.style.display === 'block') {
-        transcriptView.style.display = 'none';
-        listView.style.display = 'flex';
-        headerTitle.innerText = 'Podcasts';
-      } else {
-        history.back();
-        window.close();
-      }
-    }
-
-    /* Audio Controls */
     function formatTime(sec) {
       if (isNaN(sec)) return "0:00";
       const m = Math.floor(sec / 60);
@@ -547,7 +593,7 @@
       audioElement.currentTime = Number(e.target.value);
     });
 
-    /* Translation Popover */
+    // Translation Popover
     document.addEventListener('selectionchange', () => {
       setTimeout(checkSelection, 120);
     });

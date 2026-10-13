@@ -296,7 +296,7 @@
     }
 
     .pbs-home-title {
-      font-size: 13px;
+      font-size: 20px;
       font-weight: 700;
       color: var(--bg);
       display: inline-block;
@@ -957,6 +957,13 @@
         visibleCount++;
         const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
 
+	if (currentEpisode && currentEpisode.title === ep.title) {
+          currentEpisode.displayIndex = visibleCount;
+          const syncedTitle = `${visibleCount}. ${currentEpisode.title}`;
+          headerMarqueeText.innerText = syncedTitle;
+          pbsHomeTitle.innerText = syncedTitle;
+        }
+
         const card = document.createElement('div');
         card.className = `card ${isCompleted ? 'completed' : ''}`;
         card.innerHTML = `
@@ -972,7 +979,8 @@
             </div>
           </div>
         `;
-        card.onclick = () => playEpisode(ep);
+        const epNum = visibleCount;
+        card.onclick = () => playEpisode(ep, epNum);
         listView.appendChild(card);
       });
 
@@ -981,11 +989,18 @@
       }
     }
 
-    async function playEpisode(ep) {
+    async function playEpisode(ep, index) {
       currentEpisode = ep;
+      if (index !== undefined) {
+        currentEpisode.displayIndex = index;
+      }
 
-      headerMarqueeText.innerText = currentEpisode.title;
-      pbsHomeTitle.innerText = currentEpisode.title;
+      const displayTitle = currentEpisode.displayIndex 
+        ? `${currentEpisode.displayIndex}. ${currentEpisode.title}` 
+        : currentEpisode.title;
+
+      headerMarqueeText.innerText = displayTitle;
+      pbsHomeTitle.innerText = displayTitle;
 
       audioElement.src = safeUrl(currentEpisode.audio);
       audioElement.load();

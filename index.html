@@ -83,12 +83,14 @@
 
     .header-marquee-wrapper {
       display: none;
-      max-width: 88vw;
+      width: 70vw;
+      max-width: 480px;
       overflow: hidden;
       white-space: nowrap;
       position: relative;
-      mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
-      -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+      text-align: center;
+      mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
     }
 
     .header-marquee-text {
@@ -863,23 +865,23 @@
     }
 
     function updateMarquees() {
-      headerMarqueeText.classList.remove('marquee-active');
-      if (headerMarqueeWrapper.style.display === 'block') {
-        setTimeout(() => {
-          if (headerMarqueeText.scrollWidth > headerMarqueeWrapper.clientWidth) {
-            headerMarqueeText.classList.add('marquee-active');
-          }
-        }, 50);
-      }
+      headerMarqueeText.classList.remove("marquee-active");
+      pbsHomeTitle.classList.remove("marquee-active");
 
-      pbsHomeTitle.classList.remove('marquee-active');
-      if (playbackButtonsSection.classList.contains('mini-mode')) {
+      requestAnimationFrame(() => {
         setTimeout(() => {
-          if (pbsHomeTitle.scrollWidth > pbsHomeTitleWrapper.clientWidth) {
-            pbsHomeTitle.classList.add('marquee-active');
+          if (headerMarqueeWrapper.style.display === "block") {
+            if (headerMarqueeText.scrollWidth > headerMarqueeWrapper.clientWidth) {
+              headerMarqueeText.classList.add("marquee-active");
+            }
           }
-        }, 50);
-      }
+          if (playbackButtonsSection.classList.contains("mini-mode")) {
+            if (pbsHomeTitle.scrollWidth > pbsHomeTitleWrapper.clientWidth) {
+              pbsHomeTitle.classList.add("marquee-active");
+            }
+          }
+        }, 100);
+      });
     }
 
     function renderSpeedMenu() {
@@ -1009,6 +1011,7 @@
 
       playbackButtonsSection.style.display = 'flex';
       openPlayerView();
+      updateMarquees();
 
       cues = [];
       activeCueIndex = -1;

@@ -103,42 +103,106 @@
       text-align: center;
     }
 
+    /* ------------------------------------------------------------- */
+    /* Filter Bar: Left (Hide Done), Center (Sort Icon), Right (Search) */
+    /* ------------------------------------------------------------- */
     .filter-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
+      gap: 8px;
+      padding: 10px 16px;
       background: rgba(16, 13, 24, 0.95);
       border-bottom: 1px solid var(--border);
-    }
-
-    .sort-select {
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
     }
 
     .toggle-label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .toggle-label input {
       accent-color: var(--accent);
       cursor: pointer;
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
+    }
+
+    .sort-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .sort-select {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      max-width: 115px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      max-width: 150px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 5px 24px 5px 24px;
+      font-size: 11px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 7px;
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+
+    .btn-clear-search {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      display: none;
+      align-items: center;
+      justify-content: center;
     }
 
     main {
@@ -490,7 +554,7 @@
     }
 
     /* ------------------------------------------------------------- */
-    /* PBS HOMESCREEN MINI MODE (Floating, 40% shorter, light purple) */
+    /* PBS HOMESCREEN MINI MODE (Floating, light purple)             */
     /* ------------------------------------------------------------- */
     .playback-buttons-section.mini-mode {
       flex-direction: row;
@@ -635,18 +699,30 @@
     </div>
   </header>
 
+  <!-- Filter Bar: Left (Hide Done), Center (Compact Sort), Right (Search Bar) -->
   <div class="filter-bar" id="filterBar">
-    <select class="sort-select" id="sortSelect" onchange="applySortAndRender()">
-      <option value="date-desc">Date (Newest First)</option>
-      <option value="date-asc">Date (Oldest First)</option>
-      <option value="alpha-asc">Title (A → Z)</option>
-      <option value="alpha-desc">Title (Z → A)</option>
-    </select>
-
-    <label class="toggle-label">
+    <label class="toggle-label" title="Hide completed tracks">
       <input type="checkbox" id="hideCompletedCheck" onchange="applySortAndRender()">
-      Hide Completed
+      Hide Done
     </label>
+
+    <div class="sort-wrapper">
+      <select class="sort-select" id="sortSelect" onchange="applySortAndRender()" title="Sort episodes">
+        <option value="date-desc">⇅ Newest</option>
+        <option value="date-asc">⇅ Oldest</option>
+        <option value="alpha-asc">⇅ A → Z</option>
+        <option value="alpha-desc">⇅ Z → A</option>
+      </select>
+    </div>
+
+    <div class="search-wrapper">
+      <svg class="search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search..." oninput="handleSearchInput()">
+      <button class="btn-clear-search" id="clearSearchBtn" onclick="clearSearch()" title="Clear">✕</button>
+    </div>
   </div>
 
   <main id="mainContainer">
@@ -761,6 +837,8 @@
     const filterBar = document.getElementById('filterBar');
     const sortSelect = document.getElementById('sortSelect');
     const hideCompletedCheck = document.getElementById('hideCompletedCheck');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
     const playbackButtonsSection = document.getElementById('playbackButtonsSection');
     const pbsHomeTitleWrapper = document.getElementById('pbsHomeTitleWrapper');
     const pbsHomeTitle = document.getElementById('pbsHomeTitle');
@@ -923,6 +1001,19 @@
       speedBtn.classList.remove('active-menu');
     }
 
+    function handleSearchInput() {
+      const q = searchInput.value.trim();
+      clearSearchBtn.style.display = q ? 'flex' : 'none';
+      applySortAndRender();
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      clearSearchBtn.style.display = 'none';
+      applySortAndRender();
+      searchInput.focus();
+    }
+
     async function loadPlaylist() {
       try {
         const res = await fetch('playlist.json?nocache=' + Date.now());
@@ -937,8 +1028,13 @@
     function applySortAndRender() {
       const mode = sortSelect.value;
       const hideCompleted = hideCompletedCheck.checked;
+      const searchQuery = (searchInput.value || '').trim().toLowerCase();
 
       let list = [...rawEpisodes];
+
+      if (searchQuery) {
+        list = list.filter(ep => (ep.title || '').toLowerCase().includes(searchQuery));
+      }
 
       if (mode === 'date-desc') {
         list.sort((a, b) => (b.raw_date || '').localeCompare(a.raw_date || ''));
@@ -960,7 +1056,7 @@
         visibleCount++;
         const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
 
-	if (currentEpisode && currentEpisode.title === ep.title) {
+        if (currentEpisode && currentEpisode.title === ep.title) {
           currentEpisode.displayIndex = visibleCount;
           const syncedTitle = `${visibleCount}. ${currentEpisode.title}`;
           headerMarqueeText.innerText = syncedTitle;

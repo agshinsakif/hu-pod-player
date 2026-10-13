@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg: #0c0a14;
-      --card-bg: rgba(24, 20, 36, 0.92);
+      --card-bg: rgba(24, 20, 36, 0.94);
       --card-active: rgba(43, 36, 62, 0.98);
       --text: #f4efff;
       --text-muted: #958ea8;
@@ -114,7 +114,7 @@
     main {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 20px 260px;
+      padding: 16px 20px 140px;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
     }
@@ -228,7 +228,7 @@
       font-weight: 700;
     }
 
-    /* Taller Playback Buttons Section with Slide-Away Transitions */
+    /* Base Full Playback Buttons Section (Player Page) */
     .playback-buttons-section {
       position: fixed;
       bottom: 0;
@@ -238,38 +238,41 @@
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
       border-top: 1px solid var(--border);
-      padding: 24px 20px calc(30px + env(safe-area-inset-bottom));
+      padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
       z-index: 100;
       display: flex;
       flex-direction: column;
       align-items: center;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.25s ease;
       transform: translateY(0);
       opacity: 1;
     }
 
     .playback-buttons-section.hidden-dock {
-      transform: translateY(105%);
+      transform: translateY(115%);
       opacity: 0;
       pointer-events: none;
     }
 
-    /* Expanded Title Area with 2-Line Wrap and Clickable Pointer */
+    /* Container for title header */
+    .track-name-wrapper {
+      width: 100%;
+      overflow: hidden;
+      margin-bottom: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+
     .track-name {
       font-size: 15px;
       font-weight: 600;
       text-align: center;
-      width: 100%;
-      max-width: 90vw;
       line-height: 1.35;
-      max-height: 2.7em;
+      color: var(--text);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 14px;
-      color: var(--text);
-      cursor: pointer;
       transition: color 0.15s;
     }
 
@@ -282,7 +285,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .time-label {
@@ -306,7 +309,7 @@
       justify-content: center;
       gap: 20px;
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .btn-dock {
@@ -420,6 +423,7 @@
       background: var(--accent);
       color: #fff;
       box-shadow: 0 6px 22px rgba(139, 92, 246, 0.45);
+      flex-shrink: 0;
     }
 
     .btn-play-pause:active {
@@ -459,11 +463,82 @@
       touch-action: none;
     }
 
-    /* Bottom-Right "Go to Top" Button */
+    /* ------------------------------------------------------------- */
+    /* HOMESCREEN MINI MODE (Half-height, Marquee + Play/Pause only) */
+    /* ------------------------------------------------------------- */
+    .playback-buttons-section.mini-mode {
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 10px 18px calc(12px + env(safe-area-inset-bottom));
+      gap: 16px;
+    }
+
+    .playback-buttons-section.mini-mode .progress-bar-container,
+    .playback-buttons-section.mini-mode .controls-row .speed-btn-wrapper,
+    .playback-buttons-section.mini-mode .controls-row .btn-seek,
+    .playback-buttons-section.mini-mode .controls-row .btn-home,
+    .playback-buttons-section.mini-mode .volume-row {
+      display: none !important;
+    }
+
+    .playback-buttons-section.mini-mode .controls-row {
+      margin-bottom: 0;
+      width: auto;
+      flex-shrink: 0;
+    }
+
+    .playback-buttons-section.mini-mode .btn-play-pause {
+      width: 48px;
+      height: 48px;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+    }
+
+    .playback-buttons-section.mini-mode .btn-play-pause svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .playback-buttons-section.mini-mode .track-name-wrapper {
+      margin-bottom: 0;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+    }
+
+    .playback-buttons-section.mini-mode .track-name {
+      text-align: left;
+      display: inline-block;
+      white-space: nowrap;
+      max-width: none;
+      -webkit-line-clamp: unset;
+      padding-left: 0;
+    }
+
+    /* Marquee Animation */
+    .playback-buttons-section.mini-mode .track-name.marquee {
+      display: inline-block;
+      white-space: nowrap;
+      will-change: transform;
+      animation: marquee-slide 12s linear infinite;
+    }
+
+    @keyframes marquee-slide {
+      0% {
+        transform: translateX(10%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    /* Scroll Top Button */
     .btn-scroll-top {
       position: fixed;
       right: 20px;
-      bottom: calc(230px + env(safe-area-inset-bottom));
+      bottom: calc(110px + env(safe-area-inset-bottom));
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -558,7 +633,6 @@
     <div class="transcript-view" id="transcriptView"></div>
   </main>
 
-  <!-- Go to Top Button for Home Screen -->
   <button class="btn-scroll-top" id="scrollTopBtn" onclick="scrollToTop()" title="Scroll to top">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <path d="M18 15l-6-6-6 6"/>
@@ -567,7 +641,9 @@
 
   <!-- Playback Buttons Section -->
   <div class="playback-buttons-section" id="playbackButtonsSection" style="display: none;">
-    <div class="track-name" id="currentTrackLabel" onclick="onPlaybackTitleClick()" title="Click to view transcript">—</div>
+    <div class="track-name-wrapper" id="trackNameWrapper" onclick="onPlaybackTitleClick()" title="Return to player view">
+      <div class="track-name" id="currentTrackLabel">—</div>
+    </div>
     
     <div class="progress-bar-container">
       <span class="time-label" id="timeCurrent">0:00</span>
@@ -591,7 +667,7 @@
         </svg>
       </button>
 
-      <button class="btn-dock btn-play-pause" id="playPauseBtn" onclick="togglePlay()" title="Play / Pause (Spacebar)">
+      <button class="btn-dock btn-play-pause" id="playPauseBtn" onclick="togglePlay(event)" title="Play / Pause (Spacebar)">
         <svg id="playIcon" width="34" height="34" fill="currentColor" viewBox="0 0 24 24">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
@@ -617,7 +693,6 @@
       </button>
     </div>
 
-    <!-- Default 50% Volume -->
     <div class="volume-row">
       <svg class="volume-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -656,7 +731,7 @@
     let audioCtx = null;
     let gainNode = null;
     let sourceNode = null;
-    let currentVolume = 0.5; // Default 50%
+    let currentVolume = 0.5;
 
     const mainContainer = document.getElementById('mainContainer');
     const listView = document.getElementById('listView');
@@ -667,6 +742,7 @@
     const sortSelect = document.getElementById('sortSelect');
     const hideCompletedCheck = document.getElementById('hideCompletedCheck');
     const playbackButtonsSection = document.getElementById('playbackButtonsSection');
+    const trackNameWrapper = document.getElementById('trackNameWrapper');
     const audioElement = document.getElementById('audioElement');
     const currentTrackLabel = document.getElementById('currentTrackLabel');
     const playIcon = document.getElementById('playIcon');
@@ -727,13 +803,11 @@
     volumeBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     volumeBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
-    /* Hide Playback Section on Scroll Down, Reveal on Scroll Up */
     let lastScrollTop = 0;
     mainContainer.addEventListener('scroll', () => {
       const st = mainContainer.scrollTop;
       const isHome = listView.style.display !== 'none';
 
-      // Toggle "Go to Top" button on home screen
       if (isHome && st > 240) {
         scrollTopBtn.style.display = 'flex';
       } else {
@@ -742,11 +816,9 @@
 
       if (Math.abs(st - lastScrollTop) > 6) {
         if (st > lastScrollTop && st > 60) {
-          // Scrolling down: hide playback buttons section
           playbackButtonsSection.classList.add('hidden-dock');
           closeSpeedPopover();
         } else {
-          // Scrolling up: reveal playback buttons section
           playbackButtonsSection.classList.remove('hidden-dock');
         }
         lastScrollTop = st;
@@ -757,7 +829,7 @@
       mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /* Clicking Title on Home Screen returns to Player Screen */
+    /* Clicking Mini Player on Home Screen returns to Full Player Screen */
     function onPlaybackTitleClick() {
       if (!currentEpisode) return;
       if (listView.style.display !== 'none') {
@@ -772,7 +844,24 @@
       transcriptView.style.display = 'block';
       headerTitle.style.display = 'none';
       headerBackBtn.style.display = 'inline-flex';
+
+      // Switch to Full Taller Player Mode
+      playbackButtonsSection.classList.remove('mini-mode');
       playbackButtonsSection.classList.remove('hidden-dock');
+      currentTrackLabel.classList.remove('marquee');
+      mainContainer.style.paddingBottom = "320px";
+    }
+
+    function applyMarqueeIfNeeded() {
+      currentTrackLabel.classList.remove('marquee');
+      // If in mini-mode and content overflows, activate smooth marquee
+      if (playbackButtonsSection.classList.contains('mini-mode')) {
+        setTimeout(() => {
+          if (currentTrackLabel.scrollWidth > trackNameWrapper.clientWidth) {
+            currentTrackLabel.classList.add('marquee');
+          }
+        }, 60);
+      }
     }
 
     function renderSpeedMenu() {
@@ -884,11 +973,10 @@
       audioElement.volume = currentVolume;
 
       playbackButtonsSection.style.display = 'flex';
-      playbackButtonsSection.classList.remove('hidden-dock');
+      openPlayerView();
+
       cues = [];
       activeCueIndex = -1;
-
-      openPlayerView();
 
       const wasCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
       const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
@@ -935,8 +1023,15 @@
       filterBar.style.display = 'flex';
       headerTitle.style.display = 'block';
       headerBackBtn.style.display = 'none';
-      playbackButtonsSection.classList.remove('hidden-dock');
       closeSpeedPopover();
+
+      // Switch to Compact Mini Player Mode on Home Screen
+      if (currentEpisode) {
+        playbackButtonsSection.classList.add('mini-mode');
+        playbackButtonsSection.classList.remove('hidden-dock');
+        applyMarqueeIfNeeded();
+      }
+      mainContainer.style.paddingBottom = "140px";
       applySortAndRender();
     }
 
@@ -1003,7 +1098,8 @@
       });
     }
 
-    function togglePlay() {
+    function togglePlay(e) {
+      if (e) e.stopPropagation();
       ensureWebAudio();
       closeSpeedPopover();
       if (audioElement.paused) {
@@ -1137,6 +1233,10 @@
         }
       }
     }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      applyMarqueeIfNeeded();
+    });
 
     renderSpeedMenu();
     loadPlaylist();

@@ -494,7 +494,16 @@
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 18px calc(12px + env(safe-area-inset-bottom));
+      /* Detach from edges and bottom */
+      left: 14px;
+      right: 14px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      border-radius: 20px;
+      /* Distinct shade of color with subtle glass effect */
+      background: rgba(35, 29, 53, 0.95);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+      padding: 10px 16px;
       gap: 14px;
     }
 
@@ -548,7 +557,7 @@
     .btn-scroll-top {
       position: fixed;
       right: 20px;
-      bottom: calc(100px + env(safe-area-inset-bottom));
+      bottom: calc(115px + env(safe-area-inset-bottom));
       width: 44px;
       height: 44px;
       border-radius: 50%;

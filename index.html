@@ -36,28 +36,23 @@
       user-select: none;
     }
 
+    /* Top Centered Header */
     header {
+      position: relative;
       padding: max(14px, env(safe-area-inset-top)) 20px 14px;
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      min-height: 58px;
       z-index: 50;
     }
 
-    .brand-title {
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: -0.4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
-
     .btn-header-back {
+      position: absolute;
+      left: 16px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: var(--text);
@@ -72,6 +67,18 @@
       white-space: nowrap;
     }
 
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      max-width: 62vw;
+    }
+
+    /* Filter & Sort Bar */
     .filter-bar {
       display: flex;
       justify-content: space-between;
@@ -113,7 +120,7 @@
     main {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 20px 220px;
+      padding: 16px 20px 230px;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -146,7 +153,7 @@
     }
 
     .card.completed {
-      opacity: 0.65;
+      opacity: 0.6;
     }
 
     .card-title {
@@ -210,6 +217,7 @@
       font-weight: 700;
     }
 
+    /* Bottom Player Dock */
     .player-dock {
       position: fixed;
       bottom: 0;
@@ -257,8 +265,10 @@
       accent-color: var(--accent);
       cursor: pointer;
       height: 5px;
+      touch-action: none;
     }
 
+    /* Controls Row */
     .controls-row {
       display: flex;
       align-items: center;
@@ -279,13 +289,15 @@
     }
 
     .btn-speed {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--accent);
+      user-select: none;
+      touch-action: none;
     }
 
     .btn-seek {
@@ -313,8 +325,8 @@
     }
 
     .btn-home {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.08);
     }
@@ -323,25 +335,30 @@
       background: rgba(255, 255, 255, 0.16);
     }
 
+    /* Smooth Volume Row */
     .volume-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      width: 80%;
+      gap: 12px;
+      width: 82%;
       max-width: 320px;
+      touch-action: none;
     }
 
     .volume-icon {
       color: var(--text-muted);
+      flex-shrink: 0;
     }
 
     .volume-slider {
       flex: 1;
-      height: 4px;
+      height: 6px;
       accent-color: var(--accent);
       cursor: pointer;
+      touch-action: none;
     }
 
+    /* Translation Card */
     #popover {
       position: fixed;
       top: max(16px, env(safe-area-inset-top));
@@ -426,7 +443,8 @@
     </div>
 
     <div class="controls-row">
-      <button class="btn-dock btn-speed" id="speedBtn" onclick="cyclePlaybackRate()" title="Speed">1x</button>
+      <!-- Speed Button with scroll/swipe/click listeners -->
+      <button class="btn-dock btn-speed" id="speedBtn" onclick="cyclePlaybackRate()" title="Scroll or click to change speed">1x</button>
 
       <button class="btn-dock btn-seek" onclick="seekRelative(-10)" title="-10s">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -462,12 +480,13 @@
       </button>
     </div>
 
+    <!-- Active Hardware/WebAudio Volume Slider -->
     <div class="volume-row">
       <svg class="volume-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
         <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
       </svg>
-      <input type="range" class="volume-slider" id="volumeBar" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
+      <input type="range" class="volume-slider" id="volumeBar" min="0" max="1" step="0.02" value="1">
     </div>
 
     <audio id="audioElement" playsinline preload="auto"></audio>
@@ -485,8 +504,16 @@
     let cues = [];
     let activeCueIndex = -1;
     let currentEpisode = null;
-    const speeds = [0.75, 1, 1.25, 1.5, 2];
-    let currentSpeedIndex = 1;
+
+    // Added 0.9x and 1.1x
+    const speeds = [0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0];
+    let currentSpeedIndex = 2; // Default 1.0x
+
+    // Web Audio API Pipeline for iOS Safari volume support
+    let audioCtx = null;
+    let gainNode = null;
+    let sourceNode = null;
+    let currentVolume = 1.0;
 
     const listView = document.getElementById('listView');
     const transcriptView = document.getElementById('transcriptView');
@@ -504,6 +531,7 @@
     const timeTotal = document.getElementById('timeTotal');
     const seekBar = document.getElementById('seekBar');
     const speedBtn = document.getElementById('speedBtn');
+    const volumeBar = document.getElementById('volumeBar');
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
 
@@ -518,6 +546,43 @@
       const s = Math.floor(sec % 60);
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
+
+    /* Initialize Web Audio Gain to bypass iOS volume limitation */
+    function ensureWebAudio() {
+      if (gainNode) {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return;
+      }
+      try {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtxClass) return;
+        audioCtx = new AudioCtxClass();
+        gainNode = audioCtx.createGain();
+        sourceNode = audioCtx.createMediaElementSource(audioElement);
+        sourceNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        gainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      } catch (e) {
+        console.warn("WebAudio gain not supported:", e);
+      }
+    }
+
+    function applyVolume(val) {
+      currentVolume = Math.max(0, Math.min(1, parseFloat(val)));
+      audioElement.volume = currentVolume;
+      if (gainNode && audioCtx) {
+        gainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      }
+    }
+
+    // Isolate volume controls from swipe/scroll gestures
+    ['input', 'change'].forEach(ev => {
+      volumeBar.addEventListener(ev, (e) => applyVolume(e.target.value));
+    });
+    volumeBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+    volumeBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
     async function loadPlaylist() {
       try {
@@ -583,7 +648,7 @@
 
       audioElement.src = safeUrl(currentEpisode.audio);
       audioElement.load();
-      audioElement.playbackRate = speeds[currentSpeedIndex];
+      applySpeed();
 
       playerDock.style.display = 'flex';
       cues = [];
@@ -595,13 +660,20 @@
       headerTitle.innerText = currentEpisode.title;
       headerBackBtn.style.display = 'inline-flex';
 
+      const wasCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
       const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
-      const isCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
+
+      /* Rule 1: If restarting a completed episode, immediately unmark as completed and reset to 0:00 */
+      if (wasCompleted) {
+        localStorage.removeItem('done_' + currentEpisode.title);
+        localStorage.setItem('pos_' + currentEpisode.title, '0');
+        audioElement.currentTime = 0;
+      }
 
       audioElement.onloadedmetadata = () => {
         timeTotal.innerText = formatTime(audioElement.duration);
         seekBar.max = audioElement.duration || 100;
-        if (!isCompleted && savedTime > 0 && savedTime < (audioElement.duration - 5)) {
+        if (!wasCompleted && savedTime > 0 && savedTime < (audioElement.duration - 5)) {
           audioElement.currentTime = savedTime;
         }
       };
@@ -624,6 +696,7 @@
         transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
       }
 
+      ensureWebAudio();
       audioElement.play().catch(() => {});
     }
 
@@ -700,6 +773,7 @@
     }
 
     function togglePlay() {
+      ensureWebAudio();
       if (audioElement.paused) {
         audioElement.play().catch(() => {});
         hidePopover();
@@ -712,17 +786,51 @@
       audioElement.currentTime = Math.max(0, Math.min(audioElement.duration || 0, audioElement.currentTime + sec));
     }
 
-    function cyclePlaybackRate() {
-      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+    /* Rule 2: Playback Speed Scrolling and Touch Swiping */
+    function applySpeed() {
       const rate = speeds[currentSpeedIndex];
       audioElement.playbackRate = rate;
       speedBtn.innerText = rate + "x";
     }
 
-    function setVolume(val) {
-      audioElement.volume = parseFloat(val);
+    function cyclePlaybackRate() {
+      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+      applySpeed();
     }
 
+    // Mouse wheel scrolling on speed button
+    speedBtn.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        if (currentSpeedIndex < speeds.length - 1) currentSpeedIndex++;
+      } else {
+        if (currentSpeedIndex > 0) currentSpeedIndex--;
+      }
+      applySpeed();
+    }, { passive: false });
+
+    // Touch swipe scrolling on speed button for mobile
+    let speedTouchY = 0;
+    speedBtn.addEventListener('touchstart', (e) => {
+      speedTouchY = e.touches[0].clientY;
+      e.stopPropagation();
+    }, { passive: true });
+
+    speedBtn.addEventListener('touchmove', (e) => {
+      const diff = speedTouchY - e.touches[0].clientY;
+      if (Math.abs(diff) > 20) {
+        if (diff > 0 && currentSpeedIndex < speeds.length - 1) {
+          currentSpeedIndex++;
+        } else if (diff < 0 && currentSpeedIndex > 0) {
+          currentSpeedIndex--;
+        }
+        speedTouchY = e.touches[0].clientY;
+        applySpeed();
+      }
+      e.stopPropagation();
+    }, { passive: true });
+
+    // Spacebar Pause / Play on PC
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
@@ -751,8 +859,13 @@
 
       if (currentEpisode && cur > 0) {
         localStorage.setItem('pos_' + currentEpisode.title, cur.toString());
+
+        // Marked as completed only if within 5s of end or >98%
         if (dur > 0 && (cur >= dur - 5 || cur / dur >= 0.98)) {
           localStorage.setItem('done_' + currentEpisode.title, 'true');
+        } else if (localStorage.getItem('done_' + currentEpisode.title) === 'true' && cur < dur - 10) {
+          // Rule 1: If user rewinds backwards, unmark as completed
+          localStorage.removeItem('done_' + currentEpisode.title);
         }
       }
 
@@ -774,7 +887,10 @@
     seekBar.addEventListener('input', (e) => {
       audioElement.currentTime = Number(e.target.value);
     });
+    seekBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+    seekBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
+    // Translation & Auto-Pause
     function hidePopover() {
       popover.style.display = 'none';
     }
@@ -807,6 +923,7 @@
       }
     }
 
+    // Left-Edge Backswipe Navigation
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;

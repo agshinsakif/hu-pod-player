@@ -1277,8 +1277,16 @@
           localStorage.removeItem('done_' + currentEpisode.title);
         }
       }
+    
+    // Find the latest cue that has started
+      let idx = -1;
+      for (let i = cues.length - 1; i >= 0; i--) {
+        if (cur >= cues[i].start) {
+          idx = i;
+          break;
+        }
+      }
 
-      const idx = cues.findIndex(c => cur >= c.start && cur <= c.end);
       if (idx !== -1 && idx !== activeCueIndex) {
         if (activeCueIndex !== -1) {
           const old = document.getElementById(`cue-${activeCueIndex}`);

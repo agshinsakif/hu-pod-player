@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <link rel="apple-touch-icon" href="web-logo.png">
+  <title>Genius Podcast</title>
+
+  <!-- iOS Home Screen Setup -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Genius Podcast">
-  <title>Genius Podcast</title>
+
   <style>
     :root {
       --bg: #0c0a14;
@@ -40,7 +43,6 @@
       user-select: none;
     }
 
-    /* Header */
     header {
       position: relative;
       padding: max(14px, env(safe-area-inset-top)) 16px 14px;
@@ -56,7 +58,7 @@
 
     .btn-header-back {
       position: absolute;
-      left: 20px;
+      left: 14px;
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
@@ -79,7 +81,6 @@
       text-align: center;
     }
 
-    /* Header Top-Center Marquee Container (Player View) */
     .header-marquee-wrapper {
       display: none;
       max-width: 62vw;
@@ -99,7 +100,6 @@
       text-align: center;
     }
 
-    /* Filter & Sort Bar */
     .filter-bar {
       display: flex;
       justify-content: space-between;
@@ -255,9 +255,9 @@
       font-weight: 700;
     }
 
-    /* ----------------------------------------------------------------- */
-    /* PBS (Playback Buttons Section) - Compact on Player Screen         */
-    /* ----------------------------------------------------------------- */
+    /* ------------------------------------------------------------- */
+    /* PBS (Playback Buttons Section) - Base / Player Screen         */
+    /* ------------------------------------------------------------- */
     .playback-buttons-section {
       position: fixed;
       bottom: 0;
@@ -283,7 +283,6 @@
       pointer-events: none;
     }
 
-    /* PBS Title on Home Screen */
     .pbs-home-title-wrapper {
       display: none;
       flex: 1;
@@ -297,8 +296,8 @@
     }
 
     .pbs-home-title {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
       color: var(--bg);
       display: inline-block;
       white-space: nowrap;
@@ -357,7 +356,7 @@
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: var(--bg);
+      background: rgba(255, 255, 255, 0.08);
       font-size: 13px;
       font-weight: 700;
       color: var(--text);
@@ -401,7 +400,7 @@
     }
 
     .speed-chip {
-      background: var(--bg);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.06);
       color: var(--text);
       font-size: 11px;
@@ -458,7 +457,7 @@
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: var(--bg);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .btn-home:active {
@@ -487,24 +486,22 @@
       touch-action: none;
     }
 
-    /* ----------------------------------------------------------------- */
-    /* PBS HOMESCREEN MINI MODE (Half height, centered marquee title)   */
-    /* ----------------------------------------------------------------- */
+    /* ------------------------------------------------------------- */
+    /* PBS HOMESCREEN MINI MODE (Floating, 40% shorter, light purple) */
+    /* ------------------------------------------------------------- */
     .playback-buttons-section.mini-mode {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      /* Detach from edges and bottom */
       left: 25px;
       right: 25px;
       bottom: calc(16px + env(safe-area-inset-bottom));
-      border-radius: 20px;
-      /* Distinct shade of color with subtle glass effect */
+      border-radius: 16px;
       background: #c4b5fd;
       border: 3px solid rgba(139, 92, 246, 0.4);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
       padding: 8px 16px;
-      gap: 14px;
+      gap: 12px;
     }
 
     .playback-buttons-section.mini-mode .pbs-home-title-wrapper {
@@ -538,7 +535,6 @@
       height: 20px;
     }
 
-    /* Continuous Marquee Animation */
     .marquee-active {
       display: inline-block !important;
       white-space: nowrap !important;
@@ -555,11 +551,10 @@
       }
     }
 
-    /* Scroll Top Button */
     .btn-scroll-top {
       position: fixed;
       right: 20px;
-      bottom: calc(115px + env(safe-area-inset-bottom));
+      bottom: calc(100px + env(safe-area-inset-bottom));
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -630,10 +625,8 @@
       </svg>
       Episodes
     </button>
-    <!-- Brand on Home Screen -->
     <span class="brand-title" id="headerBrandTitle">Genius Podcast</span>
 
-    <!-- Top Center Marquee Title on Player Screen -->
     <div class="header-marquee-wrapper" id="headerMarqueeWrapper">
       <span class="header-marquee-text" id="headerMarqueeText">—</span>
     </div>
@@ -668,7 +661,6 @@
 
   <!-- Playback Buttons Section (PBS) -->
   <div class="playback-buttons-section" id="playbackButtonsSection" style="display: none;">
-    <!-- Centered Marquee Title on Home Screen -->
     <div class="pbs-home-title-wrapper" id="pbsHomeTitleWrapper" onclick="openPlayerView()" title="Open Player">
       <span class="pbs-home-title" id="pbsHomeTitle">—</span>
     </div>
@@ -721,7 +713,6 @@
       </button>
     </div>
 
-    <!-- Native HTML5 Volume (Resolves iOS Mute Issue) -->
     <div class="volume-row">
       <svg class="volume-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -730,7 +721,6 @@
       <input type="range" class="volume-slider" id="volumeBar" min="0" max="1" step="0.02" value="0.5">
     </div>
 
-    <!-- Direct Audio Element -->
     <audio id="audioElement" playsinline preload="auto"></audio>
   </div>
 
@@ -797,7 +787,6 @@
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
-    // Direct Native Volume: Prevents muted audio issue on Safari
     function setAudioVolume(val) {
       const v = Math.max(0, Math.min(1, parseFloat(val)));
       audioElement.volume = v;
@@ -810,7 +799,6 @@
     volumeBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     volumeBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
-    // Scrolling logic
     let lastScrollTop = 0;
     mainContainer.addEventListener('scroll', () => {
       const st = mainContainer.scrollTop;
@@ -837,19 +825,16 @@
       mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    /* Transition: Open Player View */
     function openPlayerView() {
       listView.style.display = 'none';
       filterBar.style.display = 'none';
       scrollTopBtn.style.display = 'none';
       transcriptView.style.display = 'block';
 
-      // Header: hide brand title, show back button and marquee title in top center
       headerBrandTitle.style.display = 'none';
       headerBackBtn.style.display = 'inline-flex';
       headerMarqueeWrapper.style.display = 'block';
 
-      // PBS: Compact Player mode (no title inside PBS)
       playbackButtonsSection.classList.remove('mini-mode');
       playbackButtonsSection.classList.remove('hidden-dock');
       mainContainer.style.paddingBottom = "190px";
@@ -857,20 +842,17 @@
       updateMarquees();
     }
 
-    /* Transition: Exit to Home Screen */
     function exitToEpisodes() {
       transcriptView.style.display = 'none';
       listView.style.display = 'flex';
       filterBar.style.display = 'flex';
 
-      // Header: restore brand title, hide back button and top marquee
       headerBrandTitle.style.display = 'block';
       headerBackBtn.style.display = 'none';
       headerMarqueeWrapper.style.display = 'none';
 
       closeSpeedPopover();
 
-      // PBS: Mini Mode with centered marquee title
       if (currentEpisode) {
         playbackButtonsSection.classList.add('mini-mode');
         playbackButtonsSection.classList.remove('hidden-dock');
@@ -881,7 +863,6 @@
     }
 
     function updateMarquees() {
-      // 1. Top Header Marquee (Player Screen)
       headerMarqueeText.classList.remove('marquee-active');
       if (headerMarqueeWrapper.style.display === 'block') {
         setTimeout(() => {
@@ -891,7 +872,6 @@
         }, 50);
       }
 
-      // 2. Centered PBS Marquee (Home Screen)
       pbsHomeTitle.classList.remove('marquee-active');
       if (playbackButtonsSection.classList.contains('mini-mode')) {
         setTimeout(() => {
@@ -1192,71 +1172,71 @@
     seekBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     seekBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
+    // Translation Logic with Debounce and Fallback
     let translationTimeout = null;
 
     function hidePopover() {
-      popover.style.display = "none";
+      popover.style.display = 'none';
     }
 
-    // Debounce to stop request flooding on iOS Safari
-    document.addEventListener("selectionchange", () => {
+    document.addEventListener('selectionchange', () => {
       clearTimeout(translationTimeout);
-      translationTimeout = setTimeout(handleTranslationSelection, 350);
+      translationTimeout = setTimeout(handleTranslationSelection, 300);
     });
 
-    document.addEventListener("pointerdown", (e) => {
+    document.addEventListener('pointerdown', (e) => {
       if (!popover.contains(e.target)) hidePopover();
       if (!speedPopover.contains(e.target) && e.target !== speedBtn) closeSpeedPopover();
     });
 
     async function handleTranslationSelection() {
       const sel = window.getSelection();
-      const txt = sel ? sel.toString().trim() : "";
+      const txt = sel ? sel.toString().trim() : '';
 
       if (!txt || txt.length < 2) return;
 
       if (!audioElement.paused) audioElement.pause();
 
-      popover.style.display = "block";
-      popoverContent.innerText = "Translating…";
+      popover.style.display = 'block';
+      popoverContent.innerText = 'Translating…';
 
-      // 1. Primary: Google Translate endpoint
+      // 1. Google Translate
       try {
         const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
         const res = await fetch(gUrl);
-        if (!res.ok) throw new Error("Status: " + res.status);
+        if (!res.ok) throw new Error('Status: ' + res.status);
         const data = await res.json();
         if (data && data[0]) {
-          popoverContent.innerText = data[0].map(i => i[0]).join("");
+          popoverContent.innerText = data[0].map(i => i[0]).join('');
           return;
         }
       } catch (err) {
-        console.warn("Google translate failed, trying fallback...", err);
+        console.warn('Google Translate failed, trying fallback...', err);
       }
 
-      // 2. Backup: MyMemory API
+      // 2. MyMemory Fallback
       try {
         const fbUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=hu|en`;
         const fbRes = await fetch(fbUrl);
-        if (!fbRes.ok) throw new Error("Fallback status: " + fbRes.status);
+        if (!fbRes.ok) throw new Error('Fallback status: ' + fbRes.status);
         const fbData = await fbRes.json();
         if (fbData && fbData.responseData && fbData.responseData.translatedText) {
           popoverContent.innerText = fbData.responseData.translatedText;
           return;
         }
       } catch (fbErr) {
-        console.error("All translation endpoints failed:", fbErr);
+        console.error('All translation services failed:', fbErr);
       }
 
-      popoverContent.innerText = "Translation service unreachable.";
+      popoverContent.innerText = 'Translation service unreachable.';
     }
 
-    // Left-Edge Backswipe Navigation
+    // Touch Navigation
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
 
-    document.addEventListener("touchstart", (e) => {
+    document.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
@@ -1264,388 +1244,23 @@
       }
     }, { passive: true });
 
-    document.addEventListener("touchend", (e) => {
+    document.addEventListener('touchend', (e) => {
       if (e.changedTouches.length === 1) {
         const deltaX = e.changedTouches[0].clientX - touchStartX;
         const deltaY = e.changedTouches[0].clientY - touchStartY;
         const elapsed = Date.now() - touchStartTime;
 
         if (touchStartX < 50 && deltaX > 70 && Math.abs(deltaY) < 60 && elapsed < 400) {
-          if (transcriptView.style.display === "block") {
+          if (transcriptView.style.display === 'block') {
             exitToEpisodes();
           } else {
             history.back();
-            window.close();
           }
         }
       }
     }, { passive: true });
 
-    window.addEventListener("resize", () => {
-      updateMarquees();
-    });
-
-    renderSpeedMenu();
-    }
-
-    function toggleSpeedPopover(e) {
-      e.stopPropagation();
-      const isOpen = speedPopover.style.display === 'block';
-      if (isOpen) {
-        closeSpeedPopover();
-      } else {
-        speedPopover.style.display = 'block';
-        speedBtn.classList.add('active-menu');
-      }
-    }
-
-    function closeSpeedPopover() {
-      speedPopover.style.display = 'none';
-      speedBtn.classList.remove('active-menu');
-    }
-
-    async function loadPlaylist() {
-      try {
-        const res = await fetch('playlist.json?nocache=' + Date.now());
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        rawEpisodes = await res.json();
-        applySortAndRender();
-      } catch (err) {
-        listView.innerHTML = `<div class="empty-state">Could not load playlist.json.<br><small>${err.message}</small></div>`;
-      }
-    }
-
-    function applySortAndRender() {
-      const mode = sortSelect.value;
-      const hideCompleted = hideCompletedCheck.checked;
-
-      let list = [...rawEpisodes];
-
-      if (mode === 'date-desc') {
-        list.sort((a, b) => (b.raw_date || '').localeCompare(a.raw_date || ''));
-      } else if (mode === 'date-asc') {
-        list.sort((a, b) => (a.raw_date || '').localeCompare(b.raw_date || ''));
-      } else if (mode === 'alpha-asc') {
-        list.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (mode === 'alpha-desc') {
-        list.sort((a, b) => b.title.localeCompare(a.title));
-      }
-
-      listView.innerHTML = '';
-      let visibleCount = 0;
-
-      list.forEach((ep) => {
-        const isCompleted = localStorage.getItem('done_' + ep.title) === 'true';
-        if (hideCompleted && isCompleted) return;
-
-        visibleCount++;
-        const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
-
-        const card = document.createElement('div');
-        card.className = `card ${isCompleted ? 'completed' : ''}`;
-        card.innerHTML = `
-          <div class="card-index">${visibleCount}.</div>
-          <div class="card-content">
-            <div class="card-title">${ep.title}</div>
-            <div class="card-meta">
-              ${ep.upload_date ? `<span>📅 ${ep.upload_date}</span>` : ''}
-              <span>${ep.format || 'AUDIO'}</span>
-              ${!ep.vtt ? '<span class="badge badge-audio">Audio only</span>' : ''}
-              ${isCompleted ? '<span class="badge badge-completed">Completed</span>' : ''}
-              ${!isCompleted && savedPos > 5 ? `<span class="badge badge-resume">Resume ${formatTime(savedPos)}</span>` : ''}
-            </div>
-          </div>
-        `;
-        card.onclick = () => playEpisode(ep);
-        listView.appendChild(card);
-      });
-
-      if (visibleCount === 0) {
-        listView.innerHTML = '<div class="empty-state">No episodes matching your current filter.</div>';
-      }
-    }
-
-    async function playEpisode(ep) {
-      currentEpisode = ep;
-
-      headerMarqueeText.innerText = currentEpisode.title;
-      pbsHomeTitle.innerText = currentEpisode.title;
-
-      audioElement.src = safeUrl(currentEpisode.audio);
-      audioElement.load();
-      audioElement.playbackRate = selectedSpeed;
-      setAudioVolume(volumeBar.value);
-
-      playbackButtonsSection.style.display = 'flex';
-      openPlayerView();
-
-      cues = [];
-      activeCueIndex = -1;
-
-      const wasCompleted = localStorage.getItem('done_' + currentEpisode.title) === 'true';
-      const savedTime = parseFloat(localStorage.getItem('pos_' + currentEpisode.title) || '0');
-
-      if (wasCompleted) {
-        localStorage.removeItem('done_' + currentEpisode.title);
-        localStorage.setItem('pos_' + currentEpisode.title, '0');
-        audioElement.currentTime = 0;
-      }
-
-      audioElement.onloadedmetadata = () => {
-        timeTotal.innerText = formatTime(audioElement.duration);
-        seekBar.max = audioElement.duration || 100;
-        if (!wasCompleted && savedTime > 0 && savedTime < (audioElement.duration - 5)) {
-          audioElement.currentTime = savedTime;
-        }
-      };
-
-      if (currentEpisode.vtt) {
-        try {
-          const res = await fetch(safeUrl(currentEpisode.vtt) + '?nocache=' + Date.now());
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const text = await res.text();
-          cues = parseVtt(text);
-          if (cues.length > 0) {
-            renderTranscript();
-          } else {
-            transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">Transcript file had no lines.</div>';
-          }
-        } catch (err) {
-          transcriptView.innerHTML = `<div style="text-align: center; color: var(--danger); margin-top: 60px;">Could not load transcript (${err.message}).</div>`;
-        }
-      } else {
-        transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
-      }
-
-      audioElement.play().catch(() => {});
-    }
-
-    function parseVttTime(str) {
-      const parts = str.trim().split(":");
-      let h = 0, m = 0, s = 0, ms = 0;
-      if (parts.length === 3) {
-        h = parseInt(parts[0], 10) || 0;
-        m = parseInt(parts[1], 10) || 0;
-        const sParts = parts[2].split(".");
-        s = parseInt(sParts[0], 10) || 0;
-        ms = sParts[1] ? parseInt(sParts[1].padEnd(3, "0").slice(0, 3), 10) : 0;
-      } else if (parts.length === 2) {
-        m = parseInt(parts[0], 10) || 0;
-        const sParts = parts[1].split(".");
-        s = parseInt(sParts[1], 10) || 0;
-        ms = sParts[1] ? parseInt(sParts[1].padEnd(3, "0").slice(0, 3), 10) : 0;
-      }
-      return h * 3600 + m * 60 + s + ms / 1000;
-    }
-
-    function parseVtt(text) {
-      const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-      const list = [];
-      let i = 0;
-      while (i < lines.length && !lines[i].includes("-->")) i++;
-      while (i < lines.length) {
-        const line = lines[i].trim();
-        if (line.includes("-->")) {
-          const parts = line.split("-->");
-          const start = parseVttTime(parts[0].trim().split(" ")[0]);
-          const end = parseVttTime(parts[1].trim().split(" ")[0]);
-          const textLines = [];
-          i++;
-          while (i < lines.length && lines[i].trim() !== "") {
-            if (!lines[i].includes("-->")) textLines.push(lines[i].trim());
-            i++;
-          }
-          const cueText = textLines.join(" ").replace(/<[^>]*>/g, "").trim();
-          if (cueText) list.push({ start, end, text: cueText });
-        } else {
-          i++;
-        }
-      }
-      return list;
-    }
-
-    function renderTranscript() {
-      transcriptView.innerHTML = '';
-      cues.forEach((cue, i) => {
-        const p = document.createElement('p');
-        p.className = 'cue';
-        p.id = `cue-${i}`;
-        p.innerText = cue.text;
-
-        p.onclick = () => {
-          const sel = window.getSelection().toString().trim();
-          if (sel.length > 0) return;
-          audioElement.currentTime = cue.start;
-          audioElement.play().catch(() => {});
-        };
-
-        transcriptView.appendChild(p);
-      });
-    }
-
-    function togglePlay(e) {
-      if (e) e.stopPropagation();
-      closeSpeedPopover();
-      if (audioElement.paused) {
-        audioElement.play().catch(() => {});
-        hidePopover();
-      } else {
-        audioElement.pause();
-      }
-    }
-
-    function seekRelative(sec) {
-      closeSpeedPopover();
-      audioElement.currentTime = Math.max(0, Math.min(audioElement.duration || 0, audioElement.currentTime + sec));
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-        e.preventDefault();
-        togglePlay();
-      }
-    });
-
-    audioElement.addEventListener('play', () => {
-      playIcon.style.display = 'none';
-      pauseIcon.style.display = 'block';
-      hidePopover();
-    });
-
-    audioElement.addEventListener('pause', () => {
-      playIcon.style.display = 'block';
-      pauseIcon.style.display = 'none';
-    });
-
-    audioElement.addEventListener('timeupdate', () => {
-      const cur = audioElement.currentTime;
-      const dur = audioElement.duration || 0;
-      timeCurrent.innerText = formatTime(cur);
-      seekBar.value = cur;
-
-      if (currentEpisode && cur > 0) {
-        localStorage.setItem('pos_' + currentEpisode.title, cur.toString());
-
-        if (dur > 0 && (cur >= dur - 5 || cur / dur >= 0.98)) {
-          localStorage.setItem('done_' + currentEpisode.title, 'true');
-        } else if (localStorage.getItem('done_' + currentEpisode.title) === 'true' && cur < dur - 10) {
-          localStorage.removeItem('done_' + currentEpisode.title);
-        }
-      }
-
-      const idx = cues.findIndex(c => cur >= c.start && cur <= c.end);
-      if (idx !== -1 && idx !== activeCueIndex) {
-        if (activeCueIndex !== -1) {
-          const old = document.getElementById(`cue-${activeCueIndex}`);
-          if (old) old.classList.remove('active');
-        }
-        activeCueIndex = idx;
-        const current = document.getElementById(`cue-${activeCueIndex}`);
-        if (current) {
-          current.classList.add('active');
-          current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-    });
-
-    seekBar.addEventListener('input', (e) => {
-      audioElement.currentTime = Number(e.target.value);
-    });
-    seekBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
-    seekBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
-
-    let translationTimeout = null;
-
-    function hidePopover() {
-      popover.style.display = "none";
-    }
-
-    // Debounce to stop request flooding on iOS Safari
-    document.addEventListener("selectionchange", () => {
-      clearTimeout(translationTimeout);
-      translationTimeout = setTimeout(handleTranslationSelection, 350);
-    });
-
-    document.addEventListener("pointerdown", (e) => {
-      if (!popover.contains(e.target)) hidePopover();
-      if (!speedPopover.contains(e.target) && e.target !== speedBtn) closeSpeedPopover();
-    });
-
-    async function handleTranslationSelection() {
-      const sel = window.getSelection();
-      const txt = sel ? sel.toString().trim() : "";
-
-      if (!txt || txt.length < 2) return;
-
-      if (!audioElement.paused) audioElement.pause();
-
-      popover.style.display = "block";
-      popoverContent.innerText = "Translating…";
-
-      // 1. Primary: Google Translate endpoint
-      try {
-        const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
-        const res = await fetch(gUrl);
-        if (!res.ok) throw new Error("Status: " + res.status);
-        const data = await res.json();
-        if (data && data[0]) {
-          popoverContent.innerText = data[0].map(i => i[0]).join("");
-          return;
-        }
-      } catch (err) {
-        console.warn("Google translate failed, trying fallback...", err);
-      }
-
-      // 2. Backup: MyMemory API
-      try {
-        const fbUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=hu|en`;
-        const fbRes = await fetch(fbUrl);
-        if (!fbRes.ok) throw new Error("Fallback status: " + fbRes.status);
-        const fbData = await fbRes.json();
-        if (fbData && fbData.responseData && fbData.responseData.translatedText) {
-          popoverContent.innerText = fbData.responseData.translatedText;
-          return;
-        }
-      } catch (fbErr) {
-        console.error("All translation endpoints failed:", fbErr);
-      }
-
-      popoverContent.innerText = "Translation service unreachable.";
-    }
-
-    // Left-Edge Backswipe Navigation
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    document.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
-      }
-    }, { passive: true });
-
-    document.addEventListener("touchend", (e) => {
-      if (e.changedTouches.length === 1) {
-        const deltaX = e.changedTouches[0].clientX - touchStartX;
-        const deltaY = e.changedTouches[0].clientY - touchStartY;
-        const elapsed = Date.now() - touchStartTime;
-
-        if (touchStartX < 50 && deltaX > 70 && Math.abs(deltaY) < 60 && elapsed < 400) {
-          if (transcriptView.style.display === "block") {
-            exitToEpisodes();
-          } else {
-            history.back();
-            window.close();
-          }
-        }
-      }
-    }, { passive: true });
-
-    window.addEventListener("resize", () => {
+    window.addEventListener('resize', () => {
       updateMarquees();
     });
 

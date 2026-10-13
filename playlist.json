@@ -1,15 +1,5 @@
 [
   {
-    "id": "TAiA_JfM2vA",
-    "title": "How to say 'punchline' in Hungarian",
-    "audio": "episodes/How to say 'punchline' in Hungarian.m4a",
-    "vtt": "episodes/How to say 'punchline' in Hungarian.vtt",
-    "lang": "hu",
-    "format": "M4A",
-    "upload_date": "2026-04-27",
-    "raw_date": "20260427"
-  },
-  {
     "id": "Jcb6E-hkp4E",
     "title": "A magyar emberek mindenhol ott vannak!",
     "audio": "episodes/A magyar emberek mindenhol ott vannak!.m4a",
@@ -18,6 +8,16 @@
     "format": "M4A",
     "upload_date": "2025-03-19",
     "raw_date": "20250319"
+  },
+  {
+    "id": "TAiA_JfM2vA",
+    "title": "How to say 'punchline' in Hungarian",
+    "audio": "episodes/How to say 'punchline' in Hungarian.m4a",
+    "vtt": "episodes/How to say 'punchline' in Hungarian.vtt",
+    "lang": "hu",
+    "format": "M4A",
+    "upload_date": "2026-04-27",
+    "raw_date": "20260427"
   },
   {
     "id": "Dosi3xdjlYg",

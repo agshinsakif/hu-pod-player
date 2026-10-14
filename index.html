@@ -2,21 +2,18 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Hungarian Podcast Player</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🎧</text></svg>">
   <style>
     :root {
       --bg: #0f172a;
       --card-bg: #1e293b;
       --card-active: #334155;
-      --text: #f8fafc;
+      --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
+      --highlight: #f59e0b;
       --border: #334155;
-      --cue-active-bg: rgba(56, 189, 248, 0.18);
-      --cue-active-text: #38bdf8;
     }
 
     * {
@@ -29,7 +26,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg);
-      color: var(--text);
+      color: var(--text-main);
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -37,491 +34,439 @@
     }
 
     header {
-      padding: 12px 16px;
-      background-color: var(--card-bg);
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
       z-index: 10;
+      flex-shrink: 0;
     }
 
-    .header-title {
-      font-size: 1.1rem;
+    header h1 {
+      font-size: 1.15rem;
       font-weight: 700;
-      white-space: nowrap;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .main-container {
       display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .search-box {
       flex: 1;
-      max-width: 320px;
-      position: relative;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    .search-box input:focus {
-      border-color: var(--accent);
-    }
-
-    main {
-      flex: 1;
-      display: flex;
       overflow: hidden;
-    }
-
-    /* Episode list panel */
-    #sidebar {
-      width: 360px;
-      max-width: 100%;
-      border-right: 1px solid var(--border);
-      background-color: var(--bg);
-      display: flex;
       flex-direction: column;
-      height: 100%;
-      overflow-y: auto;
     }
 
-    .episode-card {
-      padding: 12px 16px;
+    @media (min-width: 768px) {
+      .main-container {
+        flex-direction: row;
+      }
+    }
+
+    /* Playlist sidebar */
+    .playlist-section {
+      flex: 1;
+      max-height: 40%;
+      overflow-y: auto;
       border-bottom: 1px solid var(--border);
+    }
+
+    @media (min-width: 768px) {
+      .playlist-section {
+        flex: 0 0 340px;
+        max-height: none;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+      }
+    }
+
+    .playlist-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
       cursor: pointer;
       transition: background 0.15s ease;
     }
 
-    .episode-card:hover {
-      background-color: rgba(255, 255, 255, 0.03);
+    .playlist-item:hover {
+      background: var(--card-bg);
     }
 
-    .episode-card.active {
-      background-color: var(--card-active);
+    .playlist-item.active {
+      background: var(--card-active);
       border-left: 4px solid var(--accent);
     }
 
-    .episode-card-title {
+    .playlist-title {
       font-size: 0.95rem;
-      font-weight: 600;
+      font-weight: 500;
       line-height: 1.35;
       margin-bottom: 4px;
     }
 
-    .episode-card-meta {
-      font-size: 0.8rem;
+    .playlist-date {
+      font-size: 0.75rem;
       color: var(--text-muted);
-      display: flex;
-      gap: 10px;
     }
 
-    /* Content & Transcript panel */
-    #content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-      background-color: var(--card-bg);
-      position: relative;
-    }
-
-    #transcript-container {
-      flex: 1;
+    /* Transcript pane */
+    .transcript-section {
+      flex: 2;
       overflow-y: auto;
-      padding: 24px 20px 100px;
+      padding: 24px 20px 100px 20px;
       scroll-behavior: smooth;
     }
 
     .cue {
-      padding: 8px 12px;
-      margin-bottom: 6px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
       border-radius: 8px;
-      cursor: pointer;
       line-height: 1.6;
       font-size: 1.05rem;
       color: var(--text-muted);
+      cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .cue:hover {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(51, 65, 85, 0.3);
+      color: var(--text-main);
     }
 
     .cue.active {
-      background-color: var(--cue-active-bg);
-      color: var(--cue-active-text);
+      color: #ffffff;
+      background: rgba(56, 189, 248, 0.15);
+      border-left: 3px solid var(--accent);
       font-weight: 600;
     }
 
-    .transcript-status {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 60%;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      text-align: center;
-      padding: 20px;
+    .cue-time {
+      display: inline-block;
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-right: 8px;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.8;
     }
 
-    /* Bottom Player Bar */
-    #player-bar {
-      background: var(--card-bg);
+    .transcript-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Floating / Sticky audio player bar */
+    .player-bar {
+      flex-shrink: 0;
+      background: #111827;
       border-top: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 14px 20px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       z-index: 20;
     }
 
-    .now-playing-title {
-      font-size: 0.95rem;
+    .now-playing {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .now-playing span:first-child {
+      color: var(--text-main);
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-right: 12px;
     }
 
     audio {
       width: 100%;
       height: 40px;
-      outline: none;
-    }
-
-    /* Mobile Responsive View */
-    @media (max-width: 768px) {
-      main {
-        flex-direction: column;
-      }
-
-      #sidebar {
-        width: 100%;
-        height: 40%;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-      }
-
-      #content {
-        height: 60%;
-      }
-
-      .cue {
-        font-size: 1rem;
-        padding: 6px 10px;
-      }
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-title">🎧 <span>Podcast Player</span></div>
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="Search episodes..." autocomplete="off">
-    </div>
+    <h1>Podcast Player</h1>
   </header>
 
-  <main>
-    <section id="sidebar">
-      <div id="episode-list"></div>
-    </section>
+  <div class="main-container">
+    <div class="playlist-section" id="playlistList">
+      <div class="transcript-msg">Loading playlist...</div>
+    </div>
 
-    <section id="content">
-      <div id="transcript-container">
-        <div class="transcript-status">Select an episode to begin listening</div>
-      </div>
+    <div class="transcript-section" id="transcriptContainer">
+      <div class="transcript-msg">Select an episode to view transcripts.</div>
+    </div>
+  </div>
 
-      <div id="player-bar">
-        <div class="now-playing-title" id="player-title">No episode selected</div>
-        <audio id="audio-element" controls preload="metadata"></audio>
-      </div>
-    </section>
-  </main>
+  <div class="player-bar">
+    <div class="now-playing">
+      <span id="playerTitle">No episode loaded</span>
+      <span id="playerStatus"></span>
+    </div>
+    <audio id="audioPlayer" controls preload="metadata"></audio>
+  </div>
 
   <script>
-    // State
     let playlist = [];
-    let currentEpisode = null;
-    let cues = [];
+    let currentIndex = -1;
+    let currentCues = [];
     let activeCueIndex = -1;
 
-    // DOM Elements
-    const episodeListEl = document.getElementById('episode-list');
-    const searchInput = document.getElementById('search-input');
-    const transcriptContainer = document.getElementById('transcript-container');
-    const audioElement = document.getElementById('audio-element');
-    const playerTitle = document.getElementById('player-title');
+    const playlistList = document.getElementById('playlistList');
+    const transcriptContainer = document.getElementById('transcriptContainer');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerStatus = document.getElementById('playerStatus');
 
-    // Robust URL resolver handling full R2 URLs and relative repo paths
-    function resolveMediaUrl(rawPath) {
-      if (!rawPath) return "";
+    // 1. URL cleaner: protects full R2 URLs and decodes prior to clean encoding
+    function safeUrl(path) {
+      if (!path) return "";
       try {
-        const parsed = new URL(rawPath);
-        // Clean each path segment to avoid double percent-encoding
-        parsed.pathname = parsed.pathname
-          .split('/')
-          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
-          .join('/');
-        return parsed.toString();
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+          const parsed = new URL(path);
+          parsed.pathname = parsed.pathname
+            .split('/')
+            .map(seg => encodeURIComponent(decodeURIComponent(seg)))
+            .join('/');
+          return parsed.toString();
+        }
       } catch (e) {
-        // Fallback for local relative paths (e.g., "episodes/track.m4a")
-        return rawPath
-          .split('/')
-          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
-          .join('/');
+        // Fallback for non-standard path string
       }
+      return path
+        .split('/')
+        .map(part => encodeURIComponent(decodeURIComponent(part)))
+        .join('/');
     }
 
-    // Load and initialize playlist
-    async function init() {
+    // 2. Fetch and initialize the playlist
+    async function loadPlaylist() {
       try {
         const res = await fetch('playlist.json?nocache=' + Date.now());
-        if (!res.ok) throw new Error('Failed to load playlist.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         playlist = await res.json();
-
-        renderEpisodeList(playlist);
+        renderPlaylist();
 
         if (playlist.length > 0) {
-          selectEpisode(playlist[0]);
+          selectEpisode(0, false);
+        } else {
+          playlistList.innerHTML = '<div class="transcript-msg">Playlist is empty.</div>';
         }
       } catch (err) {
-        console.error(err);
-        episodeListEl.innerHTML = `<div style="padding:16px;color:#f87171;">Error loading playlist.json</div>`;
+        playlistList.innerHTML = `<div class="transcript-msg">Failed to load playlist: ${err.message}</div>`;
       }
     }
 
-    function renderEpisodeList(items) {
-      episodeListEl.innerHTML = '';
-      if (!items.length) {
-        episodeListEl.innerHTML = '<div style="padding:16px;color:var(--text-muted);">No matching episodes found.</div>';
-        return;
-      }
+    // 3. Render sidebar playlist
+    function renderPlaylist() {
+      playlistList.innerHTML = '';
+      playlist.forEach((ep, idx) => {
+        const item = document.createElement('div');
+        item.className = 'playlist-item' + (idx === currentIndex ? ' active' : '');
+        item.onclick = () => selectEpisode(idx, true);
 
-      items.forEach(ep => {
-        const card = document.createElement('div');
-        card.className = `episode-card ${currentEpisode && currentEpisode.id === ep.id ? 'active' : ''}`;
-        card.dataset.id = ep.id;
+        const title = document.createElement('div');
+        title.className = 'playlist-title';
+        title.textContent = ep.title || 'Untitled';
 
-        card.innerHTML = `
-          <div class="episode-card-title">${escapeHtml(ep.title)}</div>
-          <div class="episode-card-meta">
-            <span>📅 ${ep.upload_date || 'Unknown'}</span>
-            <span>🌐 ${(ep.lang || 'hu').toUpperCase()}</span>
-          </div>
-        `;
+        const date = document.createElement('div');
+        date.className = 'playlist-date';
+        date.textContent = ep.upload_date || '';
 
-        card.addEventListener('click', () => selectEpisode(ep));
-        episodeListEl.appendChild(card);
+        item.appendChild(title);
+        item.appendChild(date);
+        playlistList.appendChild(item);
       });
     }
 
-    function selectEpisode(ep) {
-      if (currentEpisode && currentEpisode.id === ep.id) return;
-      currentEpisode = ep;
+    // 4. Select and play an episode
+    function selectEpisode(index, autoplay = false) {
+      if (index < 0 || index >= playlist.length) return;
+      currentIndex = index;
+      renderPlaylist();
 
-      // Update sidebar styling
-      document.querySelectorAll('.episode-card').forEach(card => {
-        card.classList.toggle('active', card.dataset.id === ep.id);
-      });
+      const ep = playlist[index];
+      playerTitle.textContent = ep.title || 'Untitled';
+      playerStatus.textContent = '';
 
-      // Update audio player
-      playerTitle.textContent = ep.title;
-      audioElement.src = resolveMediaUrl(ep.audio);
+      const cleanAudioUrl = safeUrl(ep.audio);
+      if (audioPlayer.src !== cleanAudioUrl) {
+        audioPlayer.src = cleanAudioUrl;
+        audioPlayer.load();
+      }
 
-      // Media Session Metadata for iOS lock screen
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: ep.title,
-          artist: "Podcast Player",
-          album: ep.upload_date || ""
-        });
+      if (autoplay) {
+        audioPlayer.play().catch(err => console.log('Autoplay deferred:', err));
       }
 
       loadTranscript(ep);
     }
 
-    // VTT Parser
-    function parseVTTTime(str) {
-      if (!str) return 0;
-      const parts = str.trim().split(':');
-      let secs = 0;
-      if (parts.length === 3) {
-        secs = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
-      } else if (parts.length === 2) {
-        secs = parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-      }
-      return isNaN(secs) ? 0 : secs;
-    }
-
+    // 5. Parse WebVTT format (handles YouTube timestamps, duplicates & styling tags)
     function parseVTT(vttText) {
-      const lines = vttText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-      const parsedCues = [];
-      let i = 0;
+      const lines = vttText.replace(/\r\n/g, '\n').split('\n');
+      const cues = [];
+      let startTime = null;
+      let endTime = null;
+      let textLines = [];
 
-      while (i < lines.length) {
+      function timeToSec(tStr) {
+        const parts = tStr.trim().split(':');
+        if (parts.length === 3) {
+          return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+        } else if (parts.length === 2) {
+          return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+        }
+        return 0;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
 
         if (line.includes('-->')) {
+          if (startTime !== null && textLines.length > 0) {
+            const rawText = textLines.join(' ').replace(/<[^>]+>/g, '').trim();
+            if (rawText) cues.push({ start: startTime, end: endTime, text: rawText });
+          }
           const timeParts = line.split('-->');
-          const start = parseVTTTime(timeParts[0]);
-          const end = parseVTTTime(timeParts[1].split(' ')[0]);
-
-          i++;
-          let textLines = [];
-          while (i < lines.length && lines[i].trim() !== '') {
-            textLines.push(lines[i].trim());
-            i++;
-          }
-
-          // Strip HTML formatting tags (like <c> </c>, <b>)
-          const text = textLines.join(' ').replace(/<[^>]+>/g, '').trim();
-          if (text) {
-            parsedCues.push({ start, end, text });
-          }
+          startTime = timeToSec(timeParts[0]);
+          endTime = timeToSec(timeParts[1].split(' ')[0]);
+          textLines = [];
+        } else if (line && !line.startsWith('WEBVTT') && !line.startsWith('NOTE') && !/^\d+$/.test(line)) {
+          textLines.push(line);
         }
-        i++;
       }
-      return parsedCues;
+
+      if (startTime !== null && textLines.length > 0) {
+        const rawText = textLines.join(' ').replace(/<[^>]+>/g, '').trim();
+        if (rawText) cues.push({ start: startTime, end: endTime, text: rawText });
+      }
+
+      // Backwards-looking deduplication for YouTube rolling/overlapping cue windows
+      const deduplicated = [];
+      for (let j = 0; j < cues.length; j++) {
+        if (j > 0 && cues[j].text === deduplicated[deduplicated.length - 1]?.text) {
+          continue;
+        }
+        deduplicated.push(cues[j]);
+      }
+
+      return deduplicated;
     }
 
+    // 6. Fetch and display subtitle file
     async function loadTranscript(ep) {
-      cues = [];
+      currentCues = [];
       activeCueIndex = -1;
 
       if (!ep.vtt) {
-        transcriptContainer.innerHTML = '<div class="transcript-status">No transcript available for this episode.</div>';
+        transcriptContainer.innerHTML = '<div class="transcript-msg">No transcript available for this track.</div>';
         return;
       }
 
-      transcriptContainer.innerHTML = '<div class="transcript-status">Loading transcript...</div>';
+      transcriptContainer.innerHTML = '<div class="transcript-msg">Loading transcript...</div>';
 
       try {
-        const vttUrl = resolveMediaUrl(ep.vtt);
-        const res = await fetch(vttUrl + '?nocache=' + Date.now());
+        const cleanVttUrl = safeUrl(ep.vtt);
+        const cacheBuster = (cleanVttUrl.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+        const res = await fetch(cleanVttUrl + cacheBuster);
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const vttText = await res.text();
-        cues = parseVTT(vttText);
+        const text = await res.text();
+        currentCues = parseVTT(text);
 
-        if (!cues.length) {
-          transcriptContainer.innerHTML = '<div class="transcript-status">Transcript is empty.</div>';
+        if (currentCues.length === 0) {
+          transcriptContainer.innerHTML = '<div class="transcript-msg">Transcript is empty.</div>';
           return;
         }
 
-        renderTranscript();
+        renderCues();
       } catch (err) {
-        console.error("VTT Load Error:", err);
-        transcriptContainer.innerHTML = `<div class="transcript-status">Could not load transcript (${err.message}).</div>`;
+        console.error(err);
+        transcriptContainer.innerHTML = `<div class="transcript-msg">Could not load transcript (${err.message}).</div>`;
       }
     }
 
-    function renderTranscript() {
+    // 7. Format seconds to MM:SS
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // 8. Render cues onto screen
+    function renderCues() {
       transcriptContainer.innerHTML = '';
-      const fragment = document.createDocumentFragment();
+      currentCues.forEach((c, idx) => {
+        const div = document.createElement('div');
+        div.className = 'cue';
+        div.id = `cue-${idx}`;
+        div.onclick = () => {
+          audioPlayer.currentTime = c.start;
+          audioPlayer.play();
+        };
 
-      cues.forEach((cue, index) => {
-        const cueDiv = document.createElement('div');
-        cueDiv.className = 'cue';
-        cueDiv.dataset.index = index;
-        cueDiv.textContent = cue.text;
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'cue-time';
+        timeSpan.textContent = formatTime(c.start);
 
-        cueDiv.addEventListener('click', () => {
-          audioElement.currentTime = cue.start + 0.05;
-          audioElement.play().catch(() => {});
-        });
+        const textSpan = document.createElement('span');
+        textSpan.textContent = c.text;
 
-        fragment.appendChild(cueDiv);
+        div.appendChild(timeSpan);
+        div.appendChild(textSpan);
+        transcriptContainer.appendChild(div);
       });
-
-      transcriptContainer.appendChild(fragment);
     }
 
-    // Timeupdate with backwards-looking cue fallback (matches YouTube VTT overlap)
-    audioElement.addEventListener('timeupdate', () => {
-      if (!cues.length) return;
-      const currentTime = audioElement.currentTime;
+    // 9. Synchronize scrolling & highlight cue based on player time
+    audioPlayer.ontimeupdate = () => {
+      if (currentCues.length === 0) return;
+      const cur = audioPlayer.currentTime;
 
-      // 1. Check if currentTime falls strictly inside [start, end]
-      let foundIndex = cues.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-
-      // 2. Backwards-looking fallback: pick the most recent cue start
-      if (foundIndex === -1) {
-        for (let i = cues.length - 1; i >= 0; i--) {
-          if (currentTime >= cues[i].start) {
-            foundIndex = i;
-            break;
-          }
+      // Find active cue
+      let matchIdx = -1;
+      for (let i = 0; i < currentCues.length; i++) {
+        if (cur >= currentCues[i].start && cur <= currentCues[i].end) {
+          matchIdx = i;
+          break;
         }
       }
 
-      if (foundIndex !== activeCueIndex) {
-        activeCueIndex = foundIndex;
-        updateActiveCueDisplay();
-      }
-    });
+      if (matchIdx !== -1 && matchIdx !== activeCueIndex) {
+        // Remove previous active state
+        if (activeCueIndex !== -1) {
+          const prev = document.getElementById(`cue-${activeCueIndex}`);
+          if (prev) prev.classList.remove('active');
+        }
 
-    function updateActiveCueDisplay() {
-      const activeElements = transcriptContainer.querySelectorAll('.cue.active');
-      activeElements.forEach(el => el.classList.remove('active'));
-
-      if (activeCueIndex >= 0) {
-        const target = transcriptContainer.querySelector(`.cue[data-index="${activeCueIndex}"]`);
-        if (target) {
-          target.classList.add('active');
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        activeCueIndex = matchIdx;
+        const currentElem = document.getElementById(`cue-${activeCueIndex}`);
+        if (currentElem) {
+          currentElem.classList.add('active');
+          currentElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
-    }
+    };
 
-    // Search input filter
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase().trim();
-      const filtered = playlist.filter(ep => 
-        (ep.title && ep.title.toLowerCase().includes(query)) ||
-        (ep.upload_date && ep.upload_date.includes(query))
-      );
-      renderEpisodeList(filtered);
-    });
-
-    // Keyboard Shortcuts
-    window.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        audioElement.paused ? audioElement.play() : audioElement.pause();
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 5);
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        audioElement.currentTime = Math.max(0, audioElement.currentTime - 5);
+    // Auto-advance to next track on finish
+    audioPlayer.onended = () => {
+      if (currentIndex + 1 < playlist.length) {
+        selectEpisode(currentIndex + 1, true);
       }
-    });
+    };
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    // Run on startup
-    init();
+    // Init
+    loadPlaylist();
   </script>
 </body>
 </html>

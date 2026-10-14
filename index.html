@@ -1037,7 +1037,7 @@
         }
       };
 
-      if (currentEpisode.vtt) {
+    if (currentEpisode.vtt) {
         try {
           const vttUrl = safeUrl(currentEpisode.vtt);
           const glue = vttUrl.includes('?') ? '&' : '?';
@@ -1053,12 +1053,7 @@
         } catch (err) {
           transcriptView.innerHTML = `<div style="text-align: center; color: var(--danger); margin-top: 60px;">Could not load transcript (${err.message}).</div>`;
         }
-      } else {
-        transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
       }
-
-      audioElement.play().catch(() => {});
-    }
 
     function parseVttTime(str) {
       const parts = str.trim().split(":");

@@ -107,10 +107,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
+      gap: 8px;
+      padding: 10px 14px;
       background: rgba(16, 13, 24, 0.95);
       border-bottom: 1px solid var(--border);
+    }
+
+    .search-input {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      outline: none;
+      width: 105px;
+      transition: width 0.2s ease, border-color 0.2s;
+    }
+
+    .search-input:focus {
+      width: 135px;
+      border-color: var(--accent);
     }
 
     .sort-select {
@@ -630,17 +647,19 @@
   </header>
 
   <div class="filter-bar" id="filterBar">
-    <select class="sort-select" id="sortSelect" onchange="applySortAndRender()">
-      <option value="date-desc">Date (Newest First)</option>
-      <option value="date-asc">Date (Oldest First)</option>
-      <option value="alpha-asc">Title (A → Z)</option>
-      <option value="alpha-desc">Title (Z → A)</option>
+    <label class="toggle-label" style="flex-shrink: 0;">
+      <input type="checkbox" id="hideCompletedCheck" onchange="applySortAndRender()">
+      Hide Done
+    </label>
+
+    <select class="sort-select" id="sortSelect" onchange="applySortAndRender()" style="flex-shrink: 0;">
+      <option value="date-desc">Date (New)</option>
+      <option value="date-asc">Date (Old)</option>
+      <option value="alpha-asc">A → Z</option>
+      <option value="alpha-desc">Z → A</option>
     </select>
 
-    <label class="toggle-label">
-      <input type="checkbox" id="hideCompletedCheck" onchange="applySortAndRender()">
-      Hide Completed
-    </label>
+    <input type="search" class="search-input" id="searchInput" placeholder="Search…" oninput="applySortAndRender()">
   </div>
 
   <main id="mainContainer">
@@ -755,6 +774,7 @@
     const filterBar = document.getElementById('filterBar');
     const sortSelect = document.getElementById('sortSelect');
     const hideCompletedCheck = document.getElementById('hideCompletedCheck');
+    const searchInput = document.getElementById('searchInput');
     const playbackButtonsSection = document.getElementById('playbackButtonsSection');
     const pbsHomeTitleWrapper = document.getElementById('pbsHomeTitleWrapper');
     const pbsHomeTitle = document.getElementById('pbsHomeTitle');
@@ -934,6 +954,7 @@
     function applySortAndRender() {
       const mode = sortSelect.value;
       const hideCompleted = hideCompletedCheck.checked;
+      const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
 
       let list = [...rawEpisodes];
 
@@ -948,13 +969,18 @@
       }
 
       listView.innerHTML = '';
-      let visibleCount = 0;
+      let renderedCards = 0;
 
-      list.forEach((ep) => {
+      list.forEach((ep, idx) => {
         const isCompleted = localStorage.getItem('done_' + ep.title) === 'true';
         if (hideCompleted && isCompleted) return;
 
-        visibleCount++;
+        // Keep true positional number (e.g. 56th file remains 56.)
+        const truePosIndex = idx + 1;
+
+        if (query && !ep.title.toLowerCase().includes(query)) return;
+
+        renderedCards++;
         const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
 
         if (currentEpisode && currentEpisode.title === ep.title) {
@@ -967,7 +993,7 @@
         const card = document.createElement('div');
         card.className = `card ${isCompleted ? 'completed' : ''}`;
         card.innerHTML = `
-          <div class="card-index">${visibleCount}.</div>
+          <div class="card-index">${truePosIndex}.</div>
           <div class="card-content">
             <div class="card-title">${ep.title}</div>
             <div class="card-meta">
@@ -979,12 +1005,12 @@
             </div>
           </div>
         `;
-        const epNum = visibleCount;
+        const epNum = truePosIndex;
         card.onclick = () => playEpisode(ep, epNum);
         listView.appendChild(card);
       });
 
-      if (visibleCount === 0) {
+      if (renderedCards === 0) {
         listView.innerHTML = '<div class="empty-state">No episodes matching your current filter.</div>';
       }
     }

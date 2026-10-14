@@ -1016,6 +1016,10 @@
     }
 
     async function playEpisode(ep, index) {
+      if (searchInput && searchInput.value) {
+        searchInput.value = '';
+        applySortAndRender();
+      }
       currentEpisode = ep;
       if (index !== undefined) {
         currentEpisode.displayIndex = index;

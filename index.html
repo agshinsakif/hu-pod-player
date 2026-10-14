@@ -856,10 +856,20 @@
     const popover = document.getElementById('popover');
     const popoverContent = document.getElementById('popoverContent');
 
+    
     function safeUrl(path) {
       if (!path) return "";
-      return path.split('/').map(part => encodeURIComponent(part)).join('/');
+      try {
+        const url = new URL(path);
+        // Handle full http/https URLs cleanly
+        url.pathname = url.pathname.split('/').map(seg => encodeURIComponent(decodeURIComponent(seg))).join('/');
+        return url.toString();
+      } catch (e) {
+        // Fallback for relative local paths
+        return path.split('/').map(part => encodeURIComponent(decodeURIComponent(part))).join('/');
+      }
     }
+    
 
     function formatTime(sec) {
       if (isNaN(sec) || sec <= 0) return "0:00";

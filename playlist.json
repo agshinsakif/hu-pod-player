@@ -1,5 +1,15 @@
 [
   {
+    "id": "Dw7v3ChfKCA",
+    "title": "Mindennapi művészet",
+    "audio": "https://pub-xxxxxxxx.r2.dev/episodes/Mindennapi%20m%C5%B1v%C3%A9szet.m4a",
+    "vtt": "https://pub-xxxxxxxx.r2.dev/episodes/Mindennapi%20m%C5%B1v%C3%A9szet.vtt",
+    "lang": "hu",
+    "format": "M4A",
+    "upload_date": "2025-05-08",
+    "raw_date": "20250508"
+  },
+  {
     "id": "Jcb6E-hkp4E",
     "title": "A magyar emberek mindenhol ott vannak!",
     "audio": "https://pub-e36d7a3aa50045b2b7c26a8a0abb2e2a.r2.dev/episodes/A magyar emberek mindenhol ott vannak!.m4a",
@@ -558,15 +568,6 @@
     "format": "M4A",
     "upload_date": "2026-08-29",
     "raw_date": "20260829"
-  },
-  {
-    "id": "Dw7v3ChfKCA",
-    "title": "Mindennapi művészet",
-    "audio": "https://pub-e36d7a3aa50045b2b7c26a8a0abb2e2a.r2.dev/episodes/Mindennapi művészet.m4a",
-    "vtt": null,
-    "format": "M4A",
-    "upload_date": "2025-05-08",
-    "raw_date": "20250508"
   },
   {
     "id": "537XjsfIl34",

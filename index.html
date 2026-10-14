@@ -873,6 +873,11 @@
 
       closeSpeedPopover();
 
+      // Clear search when returning home so all episodes show
+      if (typeof searchInput !== 'undefined' && searchInput) {
+        searchInput.value = '';
+      }
+
       if (currentEpisode) {
         playbackButtonsSection.classList.add('mini-mode');
         playbackButtonsSection.classList.remove('hidden-dock');
@@ -1105,24 +1110,34 @@
     function parseVtt(text) {
       const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
       const list = [];
-      let i = 0;
-      while (i < lines.length && !lines[i].includes("-->")) i++;
-      while (i < lines.length) {
+      for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (line.includes("-->")) {
           const parts = line.split("-->");
-          const start = parseVttTime(parts[0].trim().split(" ")[0]);
-          const end = parseVttTime(parts[1].trim().split(" ")[0]);
-          const textLines = [];
-          i++;
-          while (i < lines.length && lines[i].trim() !== "") {
-            if (!lines[i].includes("-->")) textLines.push(lines[i].trim());
-            i++;
+          const startStr = parts[0].trim().split(/\s+/)[0];
+          const endStr = parts[1].trim().split(/\s+/)[0];
+          const start = parseVttTime(startStr);
+          const end = parseVttTime(endStr);
+
+          let cueLines = [];
+          let j = i + 1;
+          while (j < lines.length && lines[j].trim() !== "" && !lines[j].includes("-->")) {
+            cueLines.push(lines[j].trim());
+            j++;
           }
-          const cueText = textLines.join(" ").replace(/<[^>]*>/g, "").trim();
-          if (cueText) list.push({ start, end, text: cueText });
-        } else {
-          i++;
+          i = j - 1;
+
+          let cueText = cueLines.join(" ")
+            .replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .trim();
+
+          if (cueText) {
+            list.push({ start, end, text: cueText });
+          }
         }
       }
       return list;

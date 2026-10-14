@@ -780,9 +780,12 @@
 
     function safeUrl(path) {
       if (!path) return "";
-      return path.split('/').map(part => encodeURIComponent(part)).join('/');
+      if (path.startsWith("http://") || path.startsWith("https://")) {
+        return encodeURI(decodeURI(path));
+      }
+      return path.split('/').map(part => encodeURIComponent(decodeURIComponent(part))).join('/');
     }
-
+    
     function formatTime(sec) {
       if (isNaN(sec) || sec <= 0) return "0:00";
       const m = Math.floor(sec / 60);
@@ -1036,7 +1039,9 @@
 
       if (currentEpisode.vtt) {
         try {
-          const res = await fetch(safeUrl(currentEpisode.vtt) + '?nocache=' + Date.now());
+          const vttUrl = safeUrl(currentEpisode.vtt);
+          const glue = vttUrl.includes('?') ? '&' : '?';
+          const res = await fetch(vttUrl + glue + 'nocache=' + Date.now());
           if (!res.ok) throw new Error("HTTP " + res.status);
           const text = await res.text();
           cues = parseVtt(text);

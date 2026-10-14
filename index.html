@@ -873,7 +873,6 @@
 
       closeSpeedPopover();
 
-      // Clear search when returning home so all episodes show
       if (typeof searchInput !== 'undefined' && searchInput) {
         searchInput.value = '';
       }
@@ -1021,9 +1020,8 @@
     }
 
     async function playEpisode(ep, index) {
-      if (searchInput && searchInput.value) {
+      if (typeof searchInput !== 'undefined' && searchInput) {
         searchInput.value = '';
-        applySortAndRender();
       }
       currentEpisode = ep;
       if (index !== undefined) {

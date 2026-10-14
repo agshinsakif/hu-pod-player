@@ -258,9 +258,6 @@
       font-weight: 700;
     }
 
-    /* ------------------------------------------------------------- */
-    /* PBS (Playback Buttons Section) - Base / Player Screen         */
-    /* ------------------------------------------------------------- */
     .playback-buttons-section {
       position: fixed;
       bottom: 0;
@@ -489,9 +486,6 @@
       touch-action: none;
     }
 
-    /* ------------------------------------------------------------- */
-    /* PBS HOMESCREEN MINI MODE (Floating, 40% shorter, light purple) */
-    /* ------------------------------------------------------------- */
     .playback-buttons-section.mini-mode {
       flex-direction: row;
       align-items: center;
@@ -667,7 +661,7 @@
     <div class="pbs-home-title-wrapper" id="pbsHomeTitleWrapper" onclick="openPlayerView()" title="Open Player">
       <span class="pbs-home-title" id="pbsHomeTitle">—</span>
     </div>
-    
+
     <div class="progress-bar-container">
       <span class="time-label" id="timeCurrent">0:00</span>
       <input type="range" class="slider" id="seekBar" min="0" max="100" value="0">
@@ -785,7 +779,7 @@
       }
       return path.split('/').map(part => encodeURIComponent(decodeURIComponent(part))).join('/');
     }
-    
+
     function formatTime(sec) {
       if (isNaN(sec) || sec <= 0) return "0:00";
       const m = Math.floor(sec / 60);
@@ -963,7 +957,7 @@
         visibleCount++;
         const savedPos = parseFloat(localStorage.getItem('pos_' + ep.title) || '0');
 
-	if (currentEpisode && currentEpisode.title === ep.title) {
+        if (currentEpisode && currentEpisode.title === ep.title) {
           currentEpisode.displayIndex = visibleCount;
           const syncedTitle = `${visibleCount}. ${currentEpisode.title}`;
           headerMarqueeText.innerText = syncedTitle;
@@ -1037,7 +1031,7 @@
         }
       };
 
-    if (currentEpisode.vtt) {
+      if (currentEpisode.vtt) {
         try {
           const vttUrl = safeUrl(currentEpisode.vtt);
           const glue = vttUrl.includes('?') ? '&' : '?';
@@ -1053,7 +1047,12 @@
         } catch (err) {
           transcriptView.innerHTML = `<div style="text-align: center; color: var(--danger); margin-top: 60px;">Could not load transcript (${err.message}).</div>`;
         }
+      } else {
+        transcriptView.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 60px;">No transcript file available for this track.</div>';
       }
+
+      audioElement.play().catch(() => {});
+    }
 
     function parseVttTime(str) {
       const parts = str.trim().split(":");
@@ -1170,8 +1169,6 @@
         }
       }
 
-    
-    // Find the latest cue that has started
       let idx = -1;
       for (let i = cues.length - 1; i >= 0; i--) {
         if (cur >= cues[i].start) {
@@ -1200,7 +1197,6 @@
     seekBar.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     seekBar.addEventListener('touchmove', (e) => e.stopPropagation(), { passive: true });
 
-    // Translation Logic with Debounce and Fallback
     let translationTimeout = null;
 
     function hidePopover() {
@@ -1228,7 +1224,6 @@
       popover.style.display = 'block';
       popoverContent.innerText = 'Translating…';
 
-      // 1. Google Translate
       try {
         const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(txt)}`;
         const res = await fetch(gUrl);
@@ -1242,7 +1237,6 @@
         console.warn('Google Translate failed, trying fallback...', err);
       }
 
-      // 2. MyMemory Fallback
       try {
         const fbUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=hu|en`;
         const fbRes = await fetch(fbUrl);
@@ -1259,7 +1253,6 @@
       popoverContent.innerText = 'Translation service unreachable.';
     }
 
-    // Touch Navigation
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
